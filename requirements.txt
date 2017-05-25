@@ -1,0 +1,4 @@
+Flask
+mysql-python
+numpy
+itchat
