@@ -198,11 +198,16 @@ def forward_delete():
 def start():
 	uid = str(session['uid'])
 	qrcode = 'data/' + uid + '/qrcode' + str(int(time.time())) + '.png'
-	new_chat.apply_async(args=[session['uid'], 'static/' + qrcode])
+	(db,cursor) = connectdb()
+	cursor.execute("select content from forward where uid=%s", [session['uid']])
+	forward = cursor.fetchall()
+	forward = [json.loads(d['content']) for d in forward]
+	closedb(db,cursor)
+	new_chat.apply_async(args=[session['uid'], 'static/' + qrcode, forward])
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
 @celery.task
-def new_chat(uid, qrcode):
+def new_chat(uid, qrcode, forward):
 	uid = str(uid)
 	if not os.path.exists('static/data/' + uid + '/'):
 		os.makedirs('static/data/' + uid + '/')
@@ -210,18 +215,82 @@ def new_chat(uid, qrcode):
 		os.makedirs('static/data/' + uid + '/videos/')
 		os.makedirs('static/data/' + uid + '/files/')
 
-	itchat.auto_login(hotReload=True, 
-		statusStorageDir='static/data/' + uid + '/itchat.pkl',
-		picDir=qrcode)
+	@itchat.msg_register([TEXT, MAP, CARD, NOTE, SHARING], isGroupChat=False)
+	def text_reply(msg):
+		itchat.send('你好', msg['FromUserName'])
+
+	@itchat.msg_register([PICTURE, RECORDING, ATTACHMENT, VIDEO], isGroupChat=False)
+	def download_files(msg):
+		itchat.send('你好', msg['FromUserName'])
+
+	@itchat.msg_register(FRIENDS)
+	def add_friend(msg):
+		itchat.add_friend(**msg['Text'])
+		itchat.send_msg(u'你好', msg['RecommendInfo']['UserName'])
+	    
+	@itchat.msg_register([TEXT, SHARING], isGroupChat=True)
+	def group_reply_text(msg):
+		chatroom_id = msg['FromUserName']
+		chatroom_nickname = ''
+		username = msg['ActualNickName']
+
+		cell_id = -1
+		for x in xrange(0, len(forward)):
+			item = forward[x]
+			for key in item.keys():
+				if chatrooms_dict[key] == chatroom_id:
+					chatroom_nickname = item[key]
+					cell_id = x
+		if cell_id == -1:
+			return
+
+		if msg['Type'] == TEXT:
+			content = msg['Content']
+		elif msg['Type'] == SHARING:
+			content = msg['Text']
+
+		if msg['Type'] == TEXT:
+			for key in forward[cell_id].keys():
+				if not chatrooms_dict[key] == chatroom_id:
+					itchat.send('%s\n%s' % (chatroom_nickname + '-' + username, msg['Content']), chatrooms_dict[key])
+		elif msg['Type'] == SHARING:
+			for key in forward[cell_id].keys():
+				if not chatrooms_dict[key] == chatroom_id:
+					itchat.send('%s\n%s\n%s' % (chatroom_nickname + '-' + username, msg['Text'], msg['Url']), chatrooms_dict[key])
+       
+	@itchat.msg_register([PICTURE, ATTACHMENT, VIDEO], isGroupChat=True)
+	def group_reply_media(msg):
+		chatroom_id = msg['FromUserName']
+		chatroom_nickname = ''
+		username = msg['ActualNickName']
+
+		cell_id = -1
+		for x in xrange(0, len(forward)):
+			item = forward[x]
+			for key in item.keys():
+				if chatrooms_dict[key] == chatroom_id:
+					chatroom_nickname = item[key]
+					cell_id = x
+		if cell_id == -1:
+			return
+
+		if msg['FileName'][-4:] == '.gif':
+			return
+
+		msg['Text'](msg['FileName'])
+		for key in forward[cell_id].keys():
+			if not chatrooms_dict[key] == chatroom_id:
+				itchat.send('@%s@%s' % ({'Picture': 'img', 'Video': 'vid'}.get(msg['Type'], 'fil'), msg['FileName']), chatrooms_dict[key])
+
+	itchat.auto_login(hotReload=True, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
+
+	chatrooms = itchat.get_chatrooms(update=True, contactOnly=False)
+	chatrooms_dict = {c['NickName']: c['UserName'] for c in chatrooms}
 
 	(db,cursor) = connectdb()
 	cursor.execute("insert into status(uid, event, timestamp) values(%s, %s, %s)", [uid, 'start', int(time.time())])
 	cursor.execute("update user set status=%s where id=%s", ['start', uid])
 	closedb(db,cursor)
-
-	@itchat.msg_register(TEXT)
-	def reply(msg):
-		return msg['Text']
 
 	itchat.run()
 
