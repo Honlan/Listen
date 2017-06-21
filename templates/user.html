@@ -1,0 +1,369 @@
+{% extends 'layout.html' %} {% block style %}
+<style>
+#info {
+	background-color: #f2f2f2;
+	text-align: center;
+	padding: 30px 40px;
+}
+#info img {
+	width: 60px;
+	border-radius: 50%;
+	display: block;
+	margin: 0 auto;
+}
+#content>div {
+	background-color: #f2f2f2;
+	padding: 30px 40px;
+	margin-bottom: 20px;
+}
+#content h4 {
+	margin-top: 0;
+	margin-bottom: 20px;
+}
+#content button {
+	display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #252732;
+    outline: none;
+    margin: 5px 15px 10px 0;
+    color: #252732;
+    background-color: #f2f2f2;
+    border-radius: 2px;
+}
+#content button:hover {
+	background-color: #252732;
+	color: #fff;
+}
+#content #groups {
+	position: relative;
+}
+#content #groups #add_cell {
+	position: absolute;
+	right: 40px;
+	top: 30px;
+}
+#content #groups .fa {
+	color: #888;
+	padding: 0 15px;
+}
+#content #groups .fa:hover {
+	cursor: pointer;
+	color: #333;
+}
+#content #groups #add, #content #groups #edit {
+	margin-top: 20px;
+	border: 1px solid #ddd;
+	padding: 30px;
+	display: none;
+}
+#content #groups input {
+	display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 5px;
+    margin-right: 10px;
+}
+#content #groups .group {
+	margin-top: 8px;
+}
+#content #groups .cell {
+	display: inline-block;
+	border: 1px solid #ddd;
+	padding: 25px;
+	margin: 20px;
+	margin-top: 10px;
+	margin-bottom: 12px;
+	margin-left: 0;
+	background-color: rgba(255, 255, 255, 0.9);
+	border-radius: 3px;
+	position: relative;
+	vertical-align: top;
+}
+#content #groups .cell p {
+	margin-bottom: 25px;
+	color: #888;
+}
+#content #groups .cell p:last-child {
+	margin-bottom: 0;
+}
+#content #groups .cell span {
+	background-color: #53566b;
+	color: #fff;
+	padding: 6px 12px;
+	border-radius: 3px;
+}
+#content #groups .cell .fa-cog {
+	display: none;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	right: 0px;
+	top: 0px;
+}
+#content #groups .cell:hover .fa-cog {
+	display: block;
+	font-size: 35px;
+	color: #fff;
+	background-color: rgba(20, 20, 20, 0.8);
+}
+#qrcode {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(40, 40, 40, 0.6);
+    text-align: center;
+}
+#qrcode_content {
+    width: 300px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 25px;
+    margin: 0 auto;
+    border-radius: 2px;
+    position: relative;
+}
+#qrcode img {
+	width: 248px;
+	height: 248px;
+}
+</style>
+{% endblock %} {% block body %}
+<div class="row">
+	<div class="col-xs-12 cold-sm-12 col-md-3 col-lg-3">
+		<div id="info">
+			<img src="{{data['avatar']}}" alt="">
+			<h4>{{data['username']}}</h4>
+			<p style="color:#888;font-size:12px;margin-top:15px;margin-bottom:10px;">上次登陆时间</p>
+			<p style="color:#252732;margin-bottom:0;">{{data['last_login']}}</p>
+		</div>
+	</div>
+	<div class="col-xs-12 cold-sm-12 col-md-9 col-lg-9">
+		<div id="content">
+			<div id="status">
+				<h4>我的轻听
+					{% if status %}
+					<span style="margin-left:10px;color:rgb(73, 130, 185);">运行中</span>
+					{% else %}
+					<span style="margin-left:10px;color:rgb(185, 78, 73);">已停止</span>
+					{% endif %}
+				</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:0px;">{{message}}</p>
+				{% if not status %}
+				<button id="start" style="margin-top:20px;margin-bottom:0;">运行</button>
+				{% endif %}
+			</div>
+			<div id="groups">
+				<h4>转发设置</h4>
+				<div id="cells">
+					{% for item in forward %}
+					<div class="cell" id="{{item[0]}}">
+						<span class="fa fa-fw fa-cog"></span>
+						{% for i in item[1] %}
+						<p><span>{{i[0]}}</span> - <span>{{i[1]}}</span></p>
+						{% endfor %}
+					</div>
+					{% endfor %}
+				</div>
+				<i class="fa fa-fw fa-plus" id="add_cell"></i>
+				<div id="add">
+					<h4>添加转发</h4>
+					<button id="add_group" style="margin-bottom:20px;display:block;">添加群聊</button>
+					<button id="save" style="margin-top:20px;margin-bottom:0;display:block;">保存</button>
+				</div>
+				<div id="edit">
+					<h4>编辑转发</h4>
+					<button id="edit_add_group" style="margin-bottom:20px;display:block;">添加群聊</button>
+					<button id="edit_save" style="margin-top:20px;margin-bottom:0;">保存</button>
+					<button id="edit_delete" style="margin-top:20px;margin-bottom:0;">删除</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="qrcode">
+        <div id="qrcode_content">
+            <h4 style="margin-top:10px;margin-bottom:10px;">获取微信二维码</h4>
+            <img src="{{url_for('static', filename='img/loading.gif')}}" alt="">
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+	$('#add #save').before('<div class="group"><input type="text" name="origin" placeholder="群聊名称"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	$('#add #save').before('<div class="group"><input type="text" name="origin" placeholder="群聊名称"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+
+	$('#add_cell').click(function(event) {
+		$('#add').fadeIn();
+		var s = window.location.href;
+		s = s.substr(0, s.indexOf('#add'));
+		window.location.href = s + '#add';
+	});
+
+	$('#add #add_group').click(function(event) {
+		$('#add #save').before('<div class="group"><input type="text" name="origin" placeholder="群聊名称"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	});
+
+	$('#add').on('click', '.group .fa-times', function(event) {
+		$(this).parent('.group').remove();
+	});
+
+	$('#add #save').click(function(event) {
+		var dict = {};
+		var key;
+		$('#add .group input').each(function(index, el) {
+			if (index % 2 == 0) {
+				key = $(this).val();
+			}
+			else {
+				dict[key] = $(this).val();
+			}
+		});
+		$.ajax({
+			url: '{{url_for("forward_add")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: dict,
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#groups .cell .fa-cog').each(function(index, el) {
+		$(this).css('padding-top', ($(this).parent('.cell').height() + 50 - 35) / 2);
+	});
+
+	var edit_cell_id;
+
+	$('#groups .cell .fa-cog').click(function(event) {
+		edit_cell_id = $(this).parent('.cell').attr('id');
+		$('#edit .group').remove();
+		var $span = $(this).siblings('p').children('span');
+		var key;
+		$span.each(function(index, el) {
+			if (index % 2 == 0) {
+				key = $(this).text();
+			}
+			else {
+				$('#edit #edit_save').before('<div class="group"><input type="text" name="origin" placeholder="群聊名称" value="' + key + '"><input type="text" name="nickname" placeholder="群聊简称" value="' + $(this).text() + '"><span class="fa fa-fw fa-times"></span></div>');
+			}
+		});
+		$('#edit').fadeIn();
+		var s = window.location.href;
+		s = s.substr(0, s.indexOf('#edit'));
+		window.location.href = s + '#edit';
+	});
+
+	$('#edit #edit_add_group').click(function(event) {
+		$('#edit #edit_save').before('<div class="group"><input type="text" name="origin" placeholder="群聊名称"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	});
+
+	$('#edit').on('click', '.group .fa-times', function(event) {
+		$(this).parent('.group').remove();
+	});
+
+	$('#edit #edit_save').click(function(event) {
+		var dict = {};
+		var key;
+		$('#edit .group input').each(function(index, el) {
+			if (index % 2 == 0) {
+				key = $(this).val();
+			}
+			else {
+				dict[key] = $(this).val();
+			}
+		});
+		dict['edit_cell_id'] = edit_cell_id;
+		$.ajax({
+			url: '{{url_for("forward_edit")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: dict,
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#edit #edit_delete').click(function(event) {
+		$.ajax({
+			url: '{{url_for("forward_delete")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				cid: edit_cell_id
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+    $('#qrcode #qrcode_content').css('margin-top', ($('#qrcode').height() - 339) / 2);
+
+    var qrcode;
+	$('#start').click(function(event) {
+		$.ajax({
+			url: '{{url_for("start")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {},
+		})
+		.done(function(data) {
+			qrcode = data['qrcode'];
+			$('#qrcode').fadeIn();
+			$.ajax({
+				url: '{{url_for("qrcode")}}',
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					qrcode: qrcode
+				},
+			})
+			.done(function(data) {
+				$('#qrcode h4').text('扫描二维码登录');
+				$('#qrcode img').attr('src', '{{url_for("static", filename="")}}' + qrcode);
+				$.ajax({
+					url: '{{url_for("weixin")}}',
+					type: 'POST',
+					dataType: 'json',
+					data: {},
+				})
+				.done(function(data) {
+					window.location.reload();
+				})
+				.fail(function() {
+				})
+				.always(function() {
+				});
+				
+			})
+			.fail(function() {
+			})
+			.always(function() {
+			});
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+		
+	});
+});
+</script>
+{% endblock %}

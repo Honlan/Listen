@@ -30,8 +30,8 @@
     body {
         font-family: OpenSans-Light, PingFang SC, Hiragino Sans GB, Microsoft Yahei, Microsoft Jhenghei, sans-serif;
         -webkit-font-smoothing: antialiased;
-        background-color: #292b38;
-        color: #fff;
+        background-color: #fff;
+        color: #333;
     }
     
     #header {
@@ -52,7 +52,7 @@
     #header #nav a {
         text-decoration: none;
         display: inline-block;
-        color: #888;
+        color: #999;
         padding: 10px 20px;
         border-radius: 5px;
         margin-right: 0px;
@@ -118,10 +118,97 @@
     #footer p a:hover {
         color: #fff;
     }
-    
-    .BMap_cpyCtrl,
-    .anchorBL {
+
+    form {
         display: none;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: rgba(40, 40, 40, 0.6);
+        text-align: center;
+    }
+    form .form_content {
+        width: 300px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        padding: 25px;
+        margin: 0 auto;
+        border-radius: 2px;
+        position: relative;
+    }
+    form .close {
+        position: absolute;
+        top: 25px;
+        right: 20px;
+    }
+    form input {
+        display: block;
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        outline: none;
+        margin-bottom: 12px;
+        width: 100%;
+    }
+    form button {
+        display: block;
+        padding: 8px 12px;
+        border: 1px solid #252732;
+        background-color: #252732;
+        border-radius: 3px;
+        outline: none;
+        width: 100%;
+        color: #fff;
+        margin-bottom: 15px;
+    }
+    #back_to_login, #back_to_register {
+        text-decoration: none;
+        color: #252732;
+    }
+    #error {
+        position: fixed;
+        top: 20px;
+        right: 50px;
+        z-index: 99;
+        border: 1px solid #252732;
+        background-color: rgba(250, 250, 250, 0.8);
+        padding: 12px 16px;
+        display: none;
+    }
+    #my img {
+        width: 40px;
+        border-radius: 50%;
+        position: relative;
+        top: -10px;
+    }
+    #mynav {
+        position: absolute;
+        top: 61px;
+        right: 0px;
+        width: 120px;
+        border: 1px solid #ddd;
+        display: none;
+        z-index: 999;
+        background-color: #fff;
+    }
+    #header #nav #mynav a {
+        color: #252732;
+        width: 100%;
+        border-radius: 0;
+        padding: 10px 15px;
+        transition: color, background-color 0s;
+        -o-transition: color, background-color 0s;
+        -ms-transition: color, background-color 0s;
+        -moz-transition: color, background-color 0s;
+        -webkit-transition: color, background-color 0s;
+    }
+    #header #nav #mynav a .fa {
+        margin-right: 8px;
+    }
+    #header #nav #mynav a:hover {
+        color: #fff;
+        background-color: #252732;
     }
     </style>
     {% block style %} {% endblock %}
@@ -129,18 +216,23 @@
 
 <body>
     <div id="header">
-        <h1>Listen</h1>
-        <p>轻听</p>
+        <a href="{{url_for('index')}}">
+            <h1>Listen</h1>
+            <p>轻听</p>
+        </a>
         <div id="nav">
-            <a href="" id="nav1">
-                页面1
+            {% if user['login']%}
+            <a href="" id="my">
+                <img src="{{user['avatar']}}" alt="">
             </a>
-            <a href="" id="nav2">
-                页面2
-            </a>
-            <a href="" id="nav3">
-                页面3
-            </a>
+            <div id="mynav">
+                <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>我的主页</a>
+                <a href="{{url_for('logout')}}"><i class="fa fa-fw fa-times"></i>退出登录</a>
+            </div>
+            {% else %}
+            <a href="" id="login">登陆</a>
+            <a href="" id="register">注册</a>
+            {% endif %}
         </div>
     </div>
     <div style="padding:50px 60px;">
@@ -148,10 +240,139 @@
             {% block body %} {% endblock %}
         </div>
     </div>
+    <form id="login_form" method="" action="">
+        <div class="form_content">
+            <h4 style="margin-top:0;margin-bottom:20px;">登陆</h4>
+            <input type="text" name="email" placeholder="邮箱">
+            <input type="password" name="password" placeholder="密码" style="margin-bottom:20px;">
+            <button type="submit">登陆</button>
+            <a href="" id="back_to_register">没有账号？注册</a>
+            <span class="close fa fa-fw fa-close"></span>
+        </div>
+    </form>
+    <form id="register_form" method="" action="">
+        <div class="form_content">
+            <h4 style="margin-top:0;margin-bottom:20px;">注册</h4>
+            <input type="text" name="username" placeholder="昵称">
+            <input type="text" name="email" placeholder="邮箱">
+            <input type="password" name="password" placeholder="密码" style="margin-bottom:20px;">
+            <button type="submit">注册</button>
+            <a href="" id="back_to_login">已有账号登陆</a>
+            <span class="close fa fa-fw fa-close"></span>
+        </div>
+    </form>
+    <div id="error"></div>
     <div id="footer">
         <p>Copyright <span class="fa fa-fw fa-copyright"></span> 上海交通大学 <a href="http://zhanghonglun.cn/" target="_blank">张宏伦</a>
             <br/> <span style="font-size:13px;">一个闲来无事的项目</span></p>
     </div>
 </body>
+<script>
+$(document).ready(function() {
+    $('#login').click(function(event) {
+        event.preventDefault();
+        $('form').hide();
+        $('#login_form').show();
+    });
 
+    $('#back_to_login').click(function(event) {
+        event.preventDefault();
+        $('form').hide();
+        $('#login_form').show();
+    });
+
+    $('#register').click(function(event) {
+        event.preventDefault();
+        $('form').hide();
+        $('#register_form').show();
+    });
+
+    $('#back_to_register').click(function(event) {
+        event.preventDefault();
+        $('form').hide();
+        $('#register_form').show();
+    });
+
+    $('#login_form .form_content').css('margin-top', ($('#login_form').height() - 264) / 2);
+    $('#register_form .form_content').css('margin-top', ($('#register_form').height() - 310) / 2);
+
+    $('.close').click(function(event) {
+        $(this).parent('.form_content').parent('form').hide();
+    });
+
+    $('#login_form button').click(function(event) {
+        event.preventDefault();
+        $.ajax({
+            url: '{{url_for("login")}}',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                email: $('#login_form input[name="email"]').val(),
+                password: $('#login_form input[name="password"]').val(), 
+            },
+        })
+        .done(function(data) {
+            if (data['result'] == 'error') {
+                $('#error').text(data['msg']).css('color', 'rgb(185, 78, 73)').css('border-color', 'rgb(185, 78, 73)').show();
+                setTimeout(function(){
+                    $('#error').hide();
+                }, 2000);
+            }
+            else {
+                $('#error').text(data['msg']).css('color', 'rgb(73, 130, 185)').css('border-color', 'rgb(73, 130, 185)').show();
+                setTimeout(function(){
+                    window.location.href = '{{url_for("user")}}'
+                }, 2000);
+            }
+        })
+        .fail(function() {
+        })
+        .always(function() {
+        });
+        
+    });
+
+    $('#register_form button').click(function(event) {
+        event.preventDefault();
+        $.ajax({
+            url: '{{url_for("register")}}',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                username: $('#register_form input[name="username"]').val(),
+                email: $('#register_form input[name="email"]').val(),
+                password: $('#register_form input[name="password"]').val(),
+            },
+        })
+        .done(function(data) {
+            if (data['result'] == 'error') {
+                $('#error').text(data['msg']).css('color', 'rgb(185, 78, 73)').css('border-color', 'rgb(185, 78, 73)').show();
+                setTimeout(function(){
+                    $('#error').hide();
+                }, 2000);
+            }
+            else {
+                $('#error').text(data['msg']).css('color', 'rgb(73, 130, 185)').css('border-color', 'rgb(73, 130, 185)').show();
+                setTimeout(function(){
+                    window.location.href = '{{url_for("user")}}'
+                }, 2000);
+            }
+        })
+        .fail(function() {
+        })
+        .always(function() {
+        }); 
+    });
+
+    $('#my').click(function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        $('#mynav').show();
+    });
+
+    $('body').click(function(event) {
+        $('#mynav').hide();
+    });
+});
+</script>
 </html>
