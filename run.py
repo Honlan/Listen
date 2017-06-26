@@ -122,9 +122,18 @@ def index():
 	user = session_info()
 	return render_template('index.html', user=user)
 
-# 用户页
+# 用户首页
 @app.route('/user')
 def user():
+	user = session_info()
+	if not 'uid' in session:
+		return redirect(url_for('index'))
+	else:
+		return render_template('user.html', user=user)
+
+# 群聊转发
+@app.route('/forward')
+def forward():
 	user = session_info()
 	if not 'uid' in session:
 		return redirect(url_for('index'))
@@ -156,7 +165,7 @@ def user():
 
 		closedb(db,cursor)
 
-		return render_template('user.html', user=user, data=data, forward=forward, status=status, message=message)
+		return render_template('forward.html', user=user, data=data, forward=forward, status=status, message=message)
 
 # 添加群聊转发
 @app.route('/forward_add', methods=['POST'])
@@ -180,7 +189,7 @@ def forward_edit():
 			tmp[key] = value
 	data = tmp
 	(db,cursor) = connectdb()
-	cursor.execute("update forward set content=%s where id=%s", [json.dumps(data), cid])
+	cursor.execute("update forward set content=%s where id=%s and uid=%s", [json.dumps(data), cid, session['uid']])
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 
@@ -189,7 +198,7 @@ def forward_edit():
 def forward_delete():
 	data = request.form
 	(db,cursor) = connectdb()
-	cursor.execute("delete from forward where id=%s", [data['cid']])
+	cursor.execute("delete from forward where id=%s and uid=%s", [data['cid'], session['uid']])
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 
@@ -209,6 +218,12 @@ def start():
 @celery.task
 def new_chat(uid, qrcode, forward):
 	uid = str(uid)
+
+	(db,cursor) = connectdb()
+	cursor.execute("select * from user where id=%s", [uid])
+	user = cursor.fetchone()
+	closedb(db,cursor)
+
 	if not os.path.exists('static/data/' + uid + '/'):
 		os.makedirs('static/data/' + uid + '/')
 		os.makedirs('static/data/' + uid + '/imgs/')
@@ -227,8 +242,12 @@ def new_chat(uid, qrcode, forward):
 	def add_friend(msg):
 		itchat.add_friend(**msg['Text'])
 		itchat.send_msg(u'你好', msg['RecommendInfo']['UserName'])
+		for key, value in chatrooms_dict.items():
+			if key == user['invite']:
+				itchat.add_member_into_chatroom(value, [msg['RecommendInfo']], useInvitation=True)
+				break
 	    
-	@itchat.msg_register([TEXT, SHARING], isGroupChat=True)
+	@itchat.msg_register([TEXT, SHARING, NOTE], isGroupChat=True)
 	def group_reply_text(msg):
 		chatroom_id = msg['FromUserName']
 		chatroom_nickname = ''
@@ -245,11 +264,6 @@ def new_chat(uid, qrcode, forward):
 			return
 
 		if msg['Type'] == TEXT:
-			content = msg['Content']
-		elif msg['Type'] == SHARING:
-			content = msg['Text']
-
-		if msg['Type'] == TEXT:
 			for key in forward[cell_id].keys():
 				if not chatrooms_dict[key] == chatroom_id:
 					itchat.send('%s\n%s' % (chatroom_nickname + '-' + username, msg['Content']), chatrooms_dict[key])
@@ -257,6 +271,14 @@ def new_chat(uid, qrcode, forward):
 			for key in forward[cell_id].keys():
 				if not chatrooms_dict[key] == chatroom_id:
 					itchat.send('%s\n%s\n%s' % (chatroom_nickname + '-' + username, msg['Text'], msg['Url']), chatrooms_dict[key])
+		elif msg['Type'] == NOTE and msg['Text'][-5:] == u'加入了群聊':
+			idx = []
+			start = 0
+			while msg['Text'].find('"', start) >= 0:
+				t = msg['Text'].find('"', start)
+				start = t + 1
+				idx.append(t)
+			itchat.send('%s' % (user['welcome'] % msg['Text'][idx[-2] + 1:idx[-1]]), chatroom_id)
        
 	@itchat.msg_register([PICTURE, ATTACHMENT, VIDEO], isGroupChat=True)
 	def group_reply_media(msg):
@@ -277,12 +299,20 @@ def new_chat(uid, qrcode, forward):
 		if msg['FileName'][-4:] == '.gif':
 			return
 
-		msg['Text'](msg['FileName'])
+		if msg['Type'] == 'Picture':
+			msg['FileName'] = 'static/data/' + uid + '/imgs/' + msg['FileName']
+		elif msg['Type'] == 'Video':
+			msg['FileName'] = 'static/data/' + uid + '/videos/' + msg['FileName']
+		else:
+			msg['FileName'] = 'static/data/' + uid + '/files/' + msg['FileName']
+
+		msg['Text']( msg['FileName'])
 		for key in forward[cell_id].keys():
 			if not chatrooms_dict[key] == chatroom_id:
 				itchat.send('@%s@%s' % ({'Picture': 'img', 'Video': 'vid'}.get(msg['Type'], 'fil'), msg['FileName']), chatrooms_dict[key])
 
-	itchat.auto_login(hotReload=True, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
+	itchat.auto_login(hotReload=False, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
+	# itchat.auto_login(hotReload=True, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
 
 	chatrooms = itchat.get_chatrooms(update=True, contactOnly=False)
 	chatrooms_dict = {c['NickName']: c['UserName'] for c in chatrooms}
@@ -323,6 +353,24 @@ def weixin():
 		status = cursor.fetchone()['status']
 		if status == 'start':
 			break
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
+# 保存入群欢迎消息
+@app.route('/welcome', methods=['POST'])
+def welcome():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("update user set welcome=%s where id=%s", [data['welcome'], session['uid']])
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
+# 保存自动群聊邀请
+@app.route('/invite', methods=['POST'])
+def invite():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("update user set invite=%s where id=%s", [data['invite'], session['uid']])
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 

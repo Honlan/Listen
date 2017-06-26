@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Listen</title>
+    <title>MyListen</title>
     <meta name="description" content="" />
     <meta name="keywords" content="" />
     <meta name="author" content="" />
@@ -217,7 +217,7 @@
 <body>
     <div id="header">
         <a href="{{url_for('index')}}">
-            <h1>Listen</h1>
+            <h1>MyListen</h1>
             <p>轻听</p>
         </a>
         <div id="nav">
@@ -226,7 +226,7 @@
                 <img src="{{user['avatar']}}" alt="">
             </a>
             <div id="mynav">
-                <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>我的主页</a>
+                <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>我的轻听</a>
                 <a href="{{url_for('logout')}}"><i class="fa fa-fw fa-times"></i>退出登录</a>
             </div>
             {% else %}
