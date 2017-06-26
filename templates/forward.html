@@ -147,6 +147,16 @@
     outline: none;
     margin-bottom: 5px;
     margin-top: 20px;
+    width: 200px;
+}
+#content #reminder input {
+	display: block;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 5px;
+    margin-top: 20px;
+    width: 200px;
 }
 </style>
 {% endblock %} {% block body %}
@@ -210,6 +220,12 @@
 				<p style="color:#888;font-size:12px;margin-bottom:0px;">添加好友后，自动发送群聊邀请，为空则不发送</p>
 				<input type="text" name="invite" placeholder="自动邀请的群聊名称" value="{{data['invite']}}">
 				<button id="invite_save" style="margin-top:20px;margin-bottom:0;">保存</button>
+			</div>
+			<div id="reminder" style="margin-bottom:0;">
+				<h4>掉线提醒</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:0px;">输入邮箱，机器人掉线时将接收提醒邮件，为空则不发送</p>
+				<input type="text" name="reminder" placeholder="掉线提醒邮件接收邮箱" value="{{data['reminder']}}">
+				<button id="reminder_save" style="margin-top:20px;margin-bottom:0;">保存</button>
 			</div>
 		</div>
 	</div>
@@ -366,22 +382,26 @@ $(document).ready(function() {
 				},
 			})
 			.done(function(data) {
-				$('#qrcode h4').text('扫描二维码登录');
-				$('#qrcode img').attr('src', '{{url_for("static", filename="")}}' + qrcode);
-				$.ajax({
-					url: '{{url_for("weixin")}}',
-					type: 'POST',
-					dataType: 'json',
-					data: {},
-				})
-				.done(function(data) {
+				if (data['qrcode'] == '') {
 					window.location.reload();
-				})
-				.fail(function() {
-				})
-				.always(function() {
-				});
-				
+				}
+				else {
+					$('#qrcode h4').text('扫描二维码登录');
+					$('#qrcode img').attr('src', 'data:image/png;base64,' + data['qrcode']);
+					$.ajax({
+						url: '{{url_for("weixin")}}',
+						type: 'POST',
+						dataType: 'json',
+						data: {},
+					})
+					.done(function(data) {
+						window.location.reload();
+					})
+					.fail(function() {
+					})
+					.always(function() {
+					});
+				}
 			})
 			.fail(function() {
 			})
@@ -419,6 +439,24 @@ $(document).ready(function() {
 			dataType: 'json',
 			data: {
 				invite: $('#invite input').val()
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#reminder_save').click(function(event) {
+		$.ajax({
+			url: '{{url_for("reminder")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				reminder: $('#reminder input').val()
 			},
 		})
 		.done(function(data) {

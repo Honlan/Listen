@@ -17,7 +17,7 @@
     <link href="{{url_for('static',filename='css/magic.min.css')}}" rel="stylesheet">
     <script src="{{url_for('static',filename='js/d3.min.js')}}"></script>
     <script src="{{url_for('static',filename='js/echarts.min.js')}}"></script>
-    <script src="{{url_for('static',filename='js/dark.js')}}"></script>
+    <!--script src="{{url_for('static',filename='js/dark.js')}}"></script-->
     <!--script src="{{url_for('static',filename='js/echarts2/echarts.js')}}"></script-->
     <style>
     .magictime {
@@ -226,6 +226,7 @@
                 <img src="{{user['avatar']}}" alt="">
             </a>
             <div id="mynav">
+                <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>个人主页</a>
                 <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>我的轻听</a>
                 <a href="{{url_for('logout')}}"><i class="fa fa-fw fa-times"></i>退出登录</a>
             </div>

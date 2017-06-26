@@ -18,6 +18,8 @@ import itchat
 from itchat.content import *
 import hashlib
 import os
+import base64
+from flask.ext.mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -38,6 +40,12 @@ def connectdb():
 def closedb(db,cursor):
 	db.close()
 	cursor.close()
+
+# 上传数据
+def upload_msg(uid, username, chatroom, msg_type, content, url):
+	(db,cursor) = connectdb()
+	cursor.execute("insert into message(uid, username, chatroom, msg_type, content, url, timestamp) values(%s, %s, %s, %s, %s, %s, %s)", [uid, username, chatroom, msg_type, content, url, int(time.time())])
+	closedb(db,cursor)
 
 # 获取session用户数据
 def session_info():
@@ -129,7 +137,35 @@ def user():
 	if not 'uid' in session:
 		return redirect(url_for('index'))
 	else:
-		return render_template('user.html', user=user)
+		(db,cursor) = connectdb()
+
+		cursor.execute("select * from user where id=%s", [user['uid']])
+		data = cursor.fetchone()
+		data['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(data['last_login'])))
+
+		data_html = {}
+		data_js = {}
+		cursor.execute("select * from message where uid=%s", [session['uid']])
+		messages = cursor.fetchall()
+		data_html['total'] = len(messages)
+
+		data_js['plot1'] = {'xAxis': [], 'legend': [], 'data': {}}
+		for item in messages:
+			if not item['msg_type'] in data_js['plot1']['xAxis']:
+				data_js['plot1']['xAxis'].append(item['msg_type'])
+			if not item['chatroom'] in data_js['plot1']['legend']:
+				data_js['plot1']['legend'].append(item['chatroom'])
+
+			if not data_js['plot1']['data'].has_key(item['chatroom']):
+				data_js['plot1']['data'][item['chatroom']] = {}
+			if not data_js['plot1']['data'][item['chatroom']].has_key(item['msg_type']):
+				data_js['plot1']['data'][item['chatroom']][item['msg_type']] = 0
+			data_js['plot1']['data'][item['chatroom']][item['msg_type']] += 1
+
+		data_js['plot1']['data'] = [{'name': c, 'type': 'bar', 'data': [data_js['plot1']['data'][c][t] for t in data_js['plot1']['xAxis']]} for c in data_js['plot1']['legend']]
+
+		closedb(db,cursor)
+		return render_template('user.html', user=user, data=data, data_html=data_html, data_js=json.dumps(data_js))
 
 # 群聊转发
 @app.route('/forward')
@@ -241,7 +277,7 @@ def new_chat(uid, qrcode, forward):
 	@itchat.msg_register(FRIENDS)
 	def add_friend(msg):
 		itchat.add_friend(**msg['Text'])
-		itchat.send_msg(u'你好', msg['RecommendInfo']['UserName'])
+		# itchat.send_msg(u'你好', msg['RecommendInfo']['UserName'])
 		for key, value in chatrooms_dict.items():
 			if key == user['invite']:
 				itchat.add_member_into_chatroom(value, [msg['RecommendInfo']], useInvitation=True)
@@ -262,6 +298,12 @@ def new_chat(uid, qrcode, forward):
 					cell_id = x
 		if cell_id == -1:
 			return
+
+		# 上传数据
+		if msg['Type'] == TEXT:
+			upload_msg(uid, username, chatroom_nickname, msg['Type'], msg['Content'], '')
+		elif msg['Type'] == SHARING:
+			upload_msg(uid, username, chatroom_nickname, msg['Type'], msg['Text'], msg['Url'])
 
 		if msg['Type'] == TEXT:
 			for key in forward[cell_id].keys():
@@ -306,13 +348,14 @@ def new_chat(uid, qrcode, forward):
 		else:
 			msg['FileName'] = 'static/data/' + uid + '/files/' + msg['FileName']
 
-		msg['Text']( msg['FileName'])
+		upload_msg(uid, username, chatroom_nickname, msg['Type'], '', msg['FileName'])
+
+		msg['Text'](msg['FileName'])
 		for key in forward[cell_id].keys():
 			if not chatrooms_dict[key] == chatroom_id:
 				itchat.send('@%s@%s' % ({'Picture': 'img', 'Video': 'vid'}.get(msg['Type'], 'fil'), msg['FileName']), chatrooms_dict[key])
 
-	itchat.auto_login(hotReload=False, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
-	# itchat.auto_login(hotReload=True, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
+	itchat.auto_login(hotReload=True, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
 
 	chatrooms = itchat.get_chatrooms(update=True, contactOnly=False)
 	chatrooms_dict = {c['NickName']: c['UserName'] for c in chatrooms}
@@ -329,6 +372,13 @@ def new_chat(uid, qrcode, forward):
 	cursor.execute("update user set status=%s where id=%s", ['stop', uid])
 	closedb(db,cursor)
 
+	if not user['reminder'] == '':
+		with app.app_context():
+			mail = Mail(app)
+			m = Message('机器人掉线提醒', recipients=[user['reminder']])
+			m.body = '你的微信机器人已掉线，请重新登录'
+			mail.send(m)
+	
 	return
 
 # 获取二维码
@@ -336,12 +386,21 @@ def new_chat(uid, qrcode, forward):
 def qrcode():
 	data = request.form
 	uid = str(session['uid'])
+	qrcode = ''
+	(db,cursor) = connectdb()
 	while True:
 		time.sleep(1)
 		if os.path.exists('static/' + data['qrcode']):
+			with open(r'static/' + data['qrcode'], 'rb') as f:
+				qrcode = base64.b64encode(f.read())
 			break
-	time.sleep(1)
-	return json.dumps({'result': 'ok'})
+
+		cursor.execute("select status from user where id=%s", [session['uid']])
+		status = cursor.fetchone()['status']
+		if status == 'start':
+			break
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
 # 检查是否已登陆微信
 @app.route('/weixin', methods=['POST'])
@@ -371,6 +430,15 @@ def invite():
 	data = request.form
 	(db,cursor) = connectdb()
 	cursor.execute("update user set invite=%s where id=%s", [data['invite'], session['uid']])
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
+# 保存掉线提醒邮箱
+@app.route('/reminder', methods=['POST'])
+def reminder():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("update user set reminder=%s where id=%s", [data['reminder'], session['uid']])
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 

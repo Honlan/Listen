@@ -4,3 +4,4 @@ numpy
 itchat
 celery
 redis
+Flask-Mail

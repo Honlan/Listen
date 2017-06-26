@@ -62,6 +62,3 @@ apt-get install libapache2-mod-wsgi
 ## 重启Apache
 
 ## TODO
-
-掉线提醒
-加好友后自动邀请入群
