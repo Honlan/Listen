@@ -20,6 +20,7 @@ import hashlib
 import os
 import base64
 from flask_mail import Mail, Message
+import logging
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -388,8 +389,15 @@ def qrcode():
 	uid = str(session['uid'])
 	qrcode = ''
 	(db,cursor) = connectdb()
+
+	logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+	logger = logging.getLogger('tcpserver')
+
 	while True:
 		time.sleep(1)
+
+		logger.warning('static/' + data['qrcode'] + ' ' + str(os.path.exists('static/' + data['qrcode'])))
+
 		if os.path.exists('static/' + data['qrcode']):
 			with open(r'static/' + data['qrcode'], 'rb') as f:
 				qrcode = base64.b64encode(f.read())

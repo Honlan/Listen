@@ -371,8 +371,6 @@ $(document).ready(function() {
 			data: {},
 		})
 		.done(function(data) {
-			console.log('started!');
-			console.log(data);
 			qrcode = data['qrcode'];
 			$('#qrcode').fadeIn();
 			$.ajax({
@@ -384,8 +382,6 @@ $(document).ready(function() {
 				},
 			})
 			.done(function(data) {
-				console.log('geted!');
-				console.log(data);
 				if (data['qrcode'] == '') {
 					window.location.reload();
 				}
