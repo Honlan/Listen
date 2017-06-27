@@ -20,7 +20,6 @@ import hashlib
 import os
 import base64
 from flask_mail import Mail, Message
-import logging
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -249,7 +248,7 @@ def start():
 	forward = cursor.fetchall()
 	forward = [json.loads(d['content']) for d in forward]
 	closedb(db,cursor)
-	new_chat.apply_async(args=[session['uid'], 'static/' + qrcode, forward])
+	new_chat.apply_async(args=[session['uid'], FILE_PREFIX + 'static/' + qrcode, forward])
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
 @celery.task
@@ -261,11 +260,11 @@ def new_chat(uid, qrcode, forward):
 	user = cursor.fetchone()
 	closedb(db,cursor)
 
-	if not os.path.exists('static/data/' + uid + '/'):
-		os.makedirs('static/data/' + uid + '/')
-		os.makedirs('static/data/' + uid + '/imgs/')
-		os.makedirs('static/data/' + uid + '/videos/')
-		os.makedirs('static/data/' + uid + '/files/')
+	if not os.path.exists(FILE_PREFIX + 'static/data/' + uid + '/'):
+		os.makedirs(FILE_PREFIX + 'static/data/' + uid + '/')
+		os.makedirs(FILE_PREFIX + 'static/data/' + uid + '/imgs/')
+		os.makedirs(FILE_PREFIX + 'static/data/' + uid + '/videos/')
+		os.makedirs(FILE_PREFIX + 'static/data/' + uid + '/files/')
 
 	@itchat.msg_register([TEXT, MAP, CARD, NOTE, SHARING], isGroupChat=False)
 	def text_reply(msg):
@@ -343,11 +342,11 @@ def new_chat(uid, qrcode, forward):
 			return
 
 		if msg['Type'] == 'Picture':
-			msg['FileName'] = 'static/data/' + uid + '/imgs/' + msg['FileName']
+			msg['FileName'] = FILE_PREFIX + 'static/data/' + uid + '/imgs/' + msg['FileName']
 		elif msg['Type'] == 'Video':
-			msg['FileName'] = 'static/data/' + uid + '/videos/' + msg['FileName']
+			msg['FileName'] = FILE_PREFIX + 'static/data/' + uid + '/videos/' + msg['FileName']
 		else:
-			msg['FileName'] = 'static/data/' + uid + '/files/' + msg['FileName']
+			msg['FileName'] = FILE_PREFIX + 'static/data/' + uid + '/files/' + msg['FileName']
 
 		upload_msg(uid, username, chatroom_nickname, msg['Type'], '', msg['FileName'])
 
@@ -356,7 +355,7 @@ def new_chat(uid, qrcode, forward):
 			if not chatrooms_dict[key] == chatroom_id:
 				itchat.send('@%s@%s' % ({'Picture': 'img', 'Video': 'vid'}.get(msg['Type'], 'fil'), msg['FileName']), chatrooms_dict[key])
 
-	itchat.auto_login(hotReload=True, statusStorageDir='static/data/' + uid + '/itchat.pkl', picDir=qrcode)
+	itchat.auto_login(hotReload=True, statusStorageDir=FILE_PREFIX + 'static/data/' + uid + '/itchat.pkl', picDir=qrcode)
 
 	chatrooms = itchat.get_chatrooms(update=True, contactOnly=False)
 	chatrooms_dict = {c['NickName']: c['UserName'] for c in chatrooms}
@@ -389,12 +388,9 @@ def qrcode():
 	uid = str(session['uid'])
 	qrcode = ''
 	(db,cursor) = connectdb()
-	logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-	logger = logging.getLogger('tcpserver')
 	qrpath = FILE_PREFIX + 'static/' + data['qrcode']
 	while True:
 		time.sleep(1)
-		logger.warning(qrpath + ' ' + str(os.path.exists(qrpath)))
 		if os.path.exists(qrpath):
 			with open(qrpath, 'rb') as f:
 				qrcode = base64.b64encode(f.read())
