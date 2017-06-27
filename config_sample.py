@@ -13,3 +13,4 @@ MAIL_USE_TLS = True
 MAIL_USERNAME = 'username'
 MAIL_PASSWORD = 'password'
 MAIL_DEFAULT_SENDER = 'username'
+FILE_PREFIX = ''

@@ -391,11 +391,12 @@ def qrcode():
 	(db,cursor) = connectdb()
 	logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 	logger = logging.getLogger('tcpserver')
+	qrpath = FILE_PREFIX + 'static/' + data['qrcode']
 	while True:
 		time.sleep(1)
-		logger.warning('static/' + data['qrcode'] + ' ' + str(os.path.exists('static/' + data['qrcode'])))
-		if os.path.exists('static/' + data['qrcode']):
-			with open('static/' + data['qrcode'], 'rb') as f:
+		logger.warning(qrpath + ' ' + str(os.path.exists(qrpath)))
+		if os.path.exists(qrpath):
+			with open(qrpath, 'rb') as f:
 				qrcode = base64.b64encode(f.read())
 			break
 
