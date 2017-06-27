@@ -162,7 +162,13 @@ def user():
 				data_js['plot1']['data'][item['chatroom']][item['msg_type']] = 0
 			data_js['plot1']['data'][item['chatroom']][item['msg_type']] += 1
 
-		data_js['plot1']['data'] = [{'name': c, 'type': 'bar', 'data': [data_js['plot1']['data'][c][t] if data_js['plot1']['data'].has_key(c) and data_js['plot1']['data'][c].has_key[t] else 0 for t in data_js['plot1']['xAxis']]} for c in data_js['plot1']['legend']]
+		for c in data_js['plot1']['legend']:
+			if not data_js['plot1']['data'].has_key(c):
+				data_js['plot1']['data'][c] = {}
+			for t in data_js['plot1']['xAxis']:
+				if not data_js['plot1']['data'][c].has_key(t):
+					data_js['plot1']['data'][c][t] = 0
+		data_js['plot1']['data'] = [{'name': c, 'type': 'bar', 'data': [data_js['plot1']['data'][c][t] for t in data_js['plot1']['xAxis']]} for c in data_js['plot1']['legend']]
 
 		closedb(db,cursor)
 		return render_template('user.html', user=user, data=data, data_html=data_html, data_js=json.dumps(data_js))
