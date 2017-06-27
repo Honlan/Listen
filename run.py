@@ -19,7 +19,7 @@ from itchat.content import *
 import hashlib
 import os
 import base64
-from flask.ext.mail import Mail, Message
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -390,7 +390,6 @@ def qrcode():
 	(db,cursor) = connectdb()
 	while True:
 		time.sleep(1)
-		print 'static/' + data['qrcode'], os.path.exists('static/' + data['qrcode'])
 		if os.path.exists('static/' + data['qrcode']):
 			with open(r'static/' + data['qrcode'], 'rb') as f:
 				qrcode = base64.b64encode(f.read())
