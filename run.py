@@ -393,8 +393,8 @@ def qrcode():
 		time.sleep(1)
 		logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 		logger = logging.getLogger('tcpserver')
-		logger.warning(os.getcwd() + '/static/' + data['qrcode'] + ' ' + str(os.path.exists(os.getcwd() + '/static/' + data['qrcode'])))
-		if os.path.exists(os.getcwd() + '/static/' + data['qrcode']):
+		logger.warning('./static/' + data['qrcode'] + ' ' + str(os.path.exists('./static/' + data['qrcode'])))
+		if os.path.exists('./static/' + data['qrcode']):
 			with open(r'static/' + data['qrcode'], 'rb') as f:
 				qrcode = base64.b64encode(f.read())
 			break
