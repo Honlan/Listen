@@ -66,7 +66,7 @@ $(document).ready(function() {
 	var data_js = eval({{data_js | safe}});
     console.log(data_js);
 
-	var plot1 = echarts.init(document.getElementById('plot1'), 'dark');
+	var plot1 = echarts.init(document.getElementById('plot1'));
     var option1 = {
         legend: {
             data: data_js['plot1']['legend'],
