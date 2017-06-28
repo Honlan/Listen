@@ -103,17 +103,23 @@ def register():
 			closedb(db,cursor)
 			return json.dumps({'result': 'error', 'msg': '昵称或邮箱已存在'})
 		else:
-			password = hashlib.md5()
-			password.update(data['password'])
-			cursor.execute("insert into user(username, email, password, reg_time, avatar) values(%s, %s, %s, %s, %s)", [data['username'], data['email'], password.hexdigest(), int(time.time()), url_for('static', filename='img/avatar/man.png')])
-			cursor.execute("select * from user where email=%s and password=%s", [data['email'], password.hexdigest()])
-			user = cursor.fetchone()
-			closedb(db,cursor)
-			session['uid'] = user['id']
-			session['username'] = user['username']
-			session['email'] = user['email']
-			session['avatar'] = user['avatar']
-			return json.dumps({'result': 'ok', 'msg': '注册成功'})
+			cursor.execute("select count(*) as count from user")
+			count = cursor.fetchone()['count']
+			if count >= USER_LIMIT:
+				closedb(db,cursor)
+				return json.dumps({'result': 'error', 'msg': '用户数量已达内测上限'})
+			else:
+				password = hashlib.md5()
+				password.update(data['password'])
+				cursor.execute("insert into user(username, email, password, reg_time, avatar, last_login) values(%s, %s, %s, %s, %s, %s)", [data['username'], data['email'], password.hexdigest(), int(time.time()), url_for('static', filename='img/avatar/man.png'), int(time.time())])
+				cursor.execute("select * from user where email=%s and password=%s", [data['email'], password.hexdigest()])
+				user = cursor.fetchone()
+				closedb(db,cursor)
+				session['uid'] = user['id']
+				session['username'] = user['username']
+				session['email'] = user['email']
+				session['avatar'] = user['avatar']
+				return json.dumps({'result': 'ok', 'msg': '注册成功'})
 
 # 退出登录
 @app.route('/logout')
