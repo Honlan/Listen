@@ -134,7 +134,14 @@ def logout():
 @app.route('/')
 def index():
 	user = session_info()
-	return render_template('index.html', user=user)
+	(db,cursor) = connectdb()
+	stat = {}
+	cursor.execute("select count(*) as count from user")
+	stat['user'] = cursor.fetchone()['count']
+	cursor.execute("select count(*) as count from message")
+	stat['message'] = cursor.fetchone()['count']
+	closedb(db,cursor)
+	return render_template('index.html', user=user, stat=stat)
 
 # 用户首页
 @app.route('/user')

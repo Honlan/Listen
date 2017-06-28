@@ -231,15 +231,13 @@
                 <a href="{{url_for('logout')}}"><i class="fa fa-fw fa-times"></i>退出登录</a>
             </div>
             {% else %}
-            <a href="" id="login">登陆</a>
-            <a href="" id="register">注册</a>
+            <a href="" class="login">登陆</a>
+            <a href="" class="register">注册</a>
             {% endif %}
         </div>
     </div>
-    <div style="padding:50px 60px;">
-        <div id="main">
-            {% block body %} {% endblock %}
-        </div>
+    <div id="main">
+        {% block body %} {% endblock %}
     </div>
     <form id="login_form" method="" action="">
         <div class="form_content">
@@ -270,7 +268,7 @@
 </body>
 <script>
 $(document).ready(function() {
-    $('#login').click(function(event) {
+    $('.login').click(function(event) {
         event.preventDefault();
         $('form').hide();
         $('#login_form').show();
@@ -282,7 +280,7 @@ $(document).ready(function() {
         $('#login_form').show();
     });
 
-    $('#register').click(function(event) {
+    $('.register').click(function(event) {
         event.preventDefault();
         $('form').hide();
         $('#register_form').show();
