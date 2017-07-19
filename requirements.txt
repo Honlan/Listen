@@ -2,6 +2,5 @@ Flask
 mysql-python
 numpy
 itchat
-celery
 redis
 Flask-Mail

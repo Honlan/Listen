@@ -6,7 +6,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding( "utf8" )
 from flask import *
-from celery import Celery
 import warnings
 warnings.filterwarnings("ignore")
 import MySQLdb
@@ -25,9 +24,6 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 app.secret_key = SECRETKEY
 app.permanent_session_lifetime = timedelta(days=90)
-
-celery = Celery(app.name, broker=CELERY_BROKER_URL)
-celery.conf.update(app.config)
 
 # 连接数据库
 def connectdb():
@@ -267,10 +263,10 @@ def start():
 	forward = cursor.fetchall()
 	forward = [json.loads(d['content']) for d in forward]
 	closedb(db,cursor)
-	new_chat.apply_async(args=[session['uid'], FILE_PREFIX + 'static/' + qrcode, forward])
+	threading.Thread(target=new_chat, args=[session['uid'], FILE_PREFIX + 'static/' + qrcode, forward]).start()
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
-@celery.task
+# 开始监听
 def new_chat(uid, qrcode, forward):
 	uid = str(uid)
 
