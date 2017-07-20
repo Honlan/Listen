@@ -18,6 +18,8 @@ FILE_PREFIX = sys.argv[3]
 if FILE_PREFIX == 'NO':
 	FILE_PREFIX = ''
 
+app.logger.error(uid + ' ' + qrcode + ' ' + FILE_PREFIX)
+
 (db,cursor) = connectdb()
 cursor.execute("select content from forward where uid=%s", [uid])
 forward = cursor.fetchall()

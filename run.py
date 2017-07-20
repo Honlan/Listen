@@ -20,11 +20,18 @@ import os
 import base64
 from flask_mail import Mail, Message
 from subprocess import Popen
+import logging
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.secret_key = SECRETKEY
 app.permanent_session_lifetime = timedelta(days=90)
+
+# 日志系统配置
+handler = logging.FileHandler(FILE_PREFIX + 'app.log', encoding='UTF-8')
+logging_format = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s - %(message)s')
+handler.setFormatter(logging_format)
+app.logger.addHandler(handler)
 
 # 连接数据库
 def connectdb():
