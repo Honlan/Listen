@@ -27,6 +27,9 @@ cursor.execute("select * from user where id=%s", [uid])
 user = cursor.fetchone()
 closedb(db,cursor)
 
+print FILE_PREFIX + 'static/data/' + uid + '/'
+print os.path.exists(FILE_PREFIX + 'static/data/' + uid + '/')
+
 if not os.path.exists(FILE_PREFIX + 'static/data/' + uid + '/'):
 	os.makedirs(FILE_PREFIX + 'static/data/' + uid + '/')
 	os.makedirs(FILE_PREFIX + 'static/data/' + uid + '/imgs/')
