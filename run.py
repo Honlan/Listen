@@ -38,12 +38,6 @@ def closedb(db,cursor):
 	db.close()
 	cursor.close()
 
-# 上传数据
-def upload_msg(uid, username, chatroom, msg_type, content, url):
-	(db,cursor) = connectdb()
-	cursor.execute("insert into message(uid, username, chatroom, msg_type, content, url, timestamp) values(%s, %s, %s, %s, %s, %s, %s)", [uid, username, chatroom, msg_type, content, url, int(time.time())])
-	closedb(db,cursor)
-
 # 获取session用户数据
 def session_info():
 	user = {}

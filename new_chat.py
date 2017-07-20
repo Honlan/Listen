@@ -18,6 +18,12 @@ FILE_PREFIX = sys.argv[3]
 if FILE_PREFIX == 'NO':
 	FILE_PREFIX = ''
 
+# 上传数据
+def upload_msg(uid, username, chatroom, msg_type, content, url):
+	(db,cursor) = connectdb()
+	cursor.execute("insert into message(uid, username, chatroom, msg_type, content, url, timestamp) values(%s, %s, %s, %s, %s, %s, %s)", [uid, username, chatroom, msg_type, content, url, int(time.time())])
+	closedb(db,cursor)
+
 (db,cursor) = connectdb()
 cursor.execute("select content from forward where uid=%s", [uid])
 forward = cursor.fetchall()
@@ -55,6 +61,7 @@ def group_reply_text(msg):
 	chatroom_id = msg['FromUserName']
 	chatroom_nickname = ''
 	username = msg['ActualNickName']
+	print chatroom_id, username
 
 	cell_id = -1
 	for x in xrange(0, len(forward)):
@@ -63,6 +70,7 @@ def group_reply_text(msg):
 			if chatrooms_dict[key] == chatroom_id:
 				chatroom_nickname = item[key]
 				cell_id = x
+	print cell_id
 	if cell_id == -1:
 		return
 
@@ -126,6 +134,9 @@ itchat.auto_login(hotReload=True, statusStorageDir=FILE_PREFIX + 'static/data/' 
 
 chatrooms = itchat.get_chatrooms(update=True, contactOnly=False)
 chatrooms_dict = {c['NickName']: c['UserName'] for c in chatrooms}
+
+for key, value in chatrooms_dict.items():
+	print key, value
 
 (db,cursor) = connectdb()
 cursor.execute("insert into status(uid, event, timestamp) values(%s, %s, %s)", [uid, 'start', int(time.time())])
