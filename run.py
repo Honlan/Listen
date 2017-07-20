@@ -26,12 +26,6 @@ app.config.from_object(__name__)
 app.secret_key = SECRETKEY
 app.permanent_session_lifetime = timedelta(days=90)
 
-# 日志系统配置
-handler = logging.FileHandler(FILE_PREFIX + 'app.log', encoding='UTF-8')
-logging_format = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)s - %(message)s')
-handler.setFormatter(logging_format)
-app.logger.addHandler(handler)
-
 # 连接数据库
 def connectdb():
 	db = MySQLdb.connect(host=HOST, user=USER, passwd=PASSWORD, db=DATABASE, port=PORT, charset=CHARSET, cursorclass = MySQLdb.cursors.DictCursor)
