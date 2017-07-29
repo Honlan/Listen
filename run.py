@@ -253,10 +253,7 @@ def forward_delete():
 def start():
 	uid = str(session['uid'])
 	qrcode = 'data/' + uid + '/qrcode' + str(int(time.time())) + '.png'
-	if FILE_PREFIX == '':
-		Popen('python ' + FILE_PREFIX + 'new_chat.py ' + str(session['uid']) + ' ' + FILE_PREFIX + 'static/' + qrcode + ' NO', shell=True)
-	else:
-		Popen('python ' + FILE_PREFIX + 'new_chat.py ' + str(session['uid']) + ' ' + FILE_PREFIX + 'static/' + qrcode + ' ' + FILE_PREFIX, shell=True)
+	Popen('python ' + FILE_PREFIX + 'new_chat.py ' + str(session['uid']) + ' ' + FILE_PREFIX + 'static/' + qrcode + ' ' + FILE_PREFIX, shell=True)
 
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
