@@ -223,7 +223,7 @@
         <div id="nav">
             {% if user['login']%}
             <a href="" id="my">
-                <img src="{{user['avatar']}}" alt="">
+                <img src="{{url_for('static',filename=user['avatar'])}}" alt="">
             </a>
             <div id="mynav">
                 <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>个人主页</a>
