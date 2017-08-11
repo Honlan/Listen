@@ -1,6 +1,5 @@
 Flask
 mysql-python
 numpy
-itchat
-redis
+wxpy
 Flask-Mail

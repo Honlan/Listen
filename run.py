@@ -13,8 +13,6 @@ import MySQLdb.cursors
 import numpy as np
 from config import *
 from datetime import timedelta
-import itchat
-from itchat.content import *
 import hashlib
 import os
 import base64
@@ -252,9 +250,8 @@ def forward_delete():
 @app.route('/start', methods=['POST'])
 def start():
 	uid = str(session['uid'])
-	qrcode = 'data/' + uid + '/qrcode' + str(int(time.time())) + '.png'
-	Popen('python ' + FILE_PREFIX + 'new_chat.py ' + str(session['uid']) + ' ' + FILE_PREFIX + 'static/' + qrcode + ' ' + FILE_PREFIX, shell=True)
-
+	qrcode = FILE_PREFIX + 'static/data/' + uid + '/qrcode' + str(int(time.time())) + '.png'
+	Popen('python ' + FILE_PREFIX + 'new_chat.py ' + str(session['uid']) + ' ' + qrcode + ' ' + FILE_PREFIX, shell=True)
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
 # 获取二维码
@@ -264,7 +261,7 @@ def qrcode():
 	uid = str(session['uid'])
 	qrcode = ''
 	(db,cursor) = connectdb()
-	qrpath = FILE_PREFIX + 'static/' + data['qrcode']
+	qrpath = data['qrcode']
 	while True:
 		time.sleep(1)
 		if os.path.exists(qrpath):

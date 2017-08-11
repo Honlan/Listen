@@ -226,8 +226,9 @@
                 <img src="{{url_for('static',filename=user['avatar'])}}" alt="">
             </a>
             <div id="mynav">
-                <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>个人主页</a>
-                <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>我的轻听</a>
+                <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>数据统计</a>
+                <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>微信管理</a>
+                <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>轻听设置</a>
                 <a href="{{url_for('logout')}}"><i class="fa fa-fw fa-times"></i>退出登录</a>
             </div>
             {% else %}

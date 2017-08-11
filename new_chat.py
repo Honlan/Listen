@@ -15,8 +15,6 @@ from run import app, connectdb, closedb, Mail, Message
 uid = sys.argv[1]
 qrcode = sys.argv[2]
 FILE_PREFIX = sys.argv[3]
-if FILE_PREFIX == 'NO':
-	FILE_PREFIX = ''
 
 # 上传数据
 def upload_msg(uid, username, chatroom, msg_type, content, url):
@@ -50,7 +48,6 @@ def download_files(msg):
 @itchat.msg_register(FRIENDS)
 def add_friend(msg):
 	itchat.add_friend(**msg['Text'])
-	# itchat.send_msg(u'你好', msg['RecommendInfo']['UserName'])
 	for key, value in chatrooms_dict.items():
 		if key == user['invite']:
 			itchat.add_member_into_chatroom(value, [msg['RecommendInfo']], useInvitation=True)
