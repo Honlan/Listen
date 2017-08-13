@@ -100,7 +100,7 @@ def register():
 			else:
 				password = hashlib.md5()
 				password.update(data['password'])
-				cursor.execute("insert into user(username, email, password, reg_time, avatar, last_login) values(%s, %s, %s, %s, %s, %s)", [data['username'], data['email'], password.hexdigest(), int(time.time()), url_for('static', filename='img/avatar/man.png'), int(time.time())])
+				cursor.execute("insert into user(username, email, password, reg_time, avatar, last_login) values(%s, %s, %s, %s, %s, %s)", [data['username'], data['email'], password.hexdigest(), int(time.time()), 'img/avatar/man.png', int(time.time())])
 				cursor.execute("select * from user where email=%s and password=%s", [data['email'], password.hexdigest()])
 				user = cursor.fetchone()
 				closedb(db,cursor)
@@ -132,66 +132,36 @@ def index():
 	closedb(db,cursor)
 	return render_template('index.html', user=user, stat=stat)
 
-# 用户首页
-@app.route('/user')
-def user():
+# 我的轻听
+@app.route('/listen')
+def listen():
 	user = session_info()
 	if not 'uid' in session:
 		return redirect(url_for('index'))
 	else:
 		(db,cursor) = connectdb()
-
 		cursor.execute("select * from user where id=%s", [user['uid']])
 		data = cursor.fetchone()
+		if data['records'] == '':
+			data['records'] = []
+		else:
+			data['records'] = data['records'].split('^')
 		data['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(data['last_login'])))
-
-		data_html = {}
-		data_js = {}
-		cursor.execute("select * from message where uid=%s", [session['uid']])
-		messages = cursor.fetchall()
-		data_html['total'] = len(messages)
-
-		data_js['plot1'] = {'xAxis': [], 'legend': [], 'data': {}}
-		for item in messages:
-			if not item['msg_type'] in data_js['plot1']['xAxis']:
-				data_js['plot1']['xAxis'].append(item['msg_type'])
-			if not item['chatroom'] in data_js['plot1']['legend']:
-				data_js['plot1']['legend'].append(item['chatroom'])
-
-			if not data_js['plot1']['data'].has_key(item['chatroom']):
-				data_js['plot1']['data'][item['chatroom']] = {}
-			if not data_js['plot1']['data'][item['chatroom']].has_key(item['msg_type']):
-				data_js['plot1']['data'][item['chatroom']][item['msg_type']] = 0
-			data_js['plot1']['data'][item['chatroom']][item['msg_type']] += 1
-
-		for c in data_js['plot1']['legend']:
-			if not data_js['plot1']['data'].has_key(c):
-				data_js['plot1']['data'][c] = {}
-			for t in data_js['plot1']['xAxis']:
-				if not data_js['plot1']['data'][c].has_key(t):
-					data_js['plot1']['data'][c][t] = 0
-		data_js['plot1']['data'] = [{'name': c, 'type': 'bar', 'data': [data_js['plot1']['data'][c][t] for t in data_js['plot1']['xAxis']]} for c in data_js['plot1']['legend']]
-
-		closedb(db,cursor)
-		return render_template('user.html', user=user, data=data, data_html=data_html, data_js=json.dumps(data_js))
-
-# 群聊转发
-@app.route('/forward')
-def forward():
-	user = session_info()
-	if not 'uid' in session:
-		return redirect(url_for('index'))
-	else:
-		(db,cursor) = connectdb()
-		cursor.execute("select * from user where id=%s", [user['uid']])
-		data = cursor.fetchone()
+		status = data['status']
 		cursor.execute("select * from forward where uid=%s", [user['uid']])
 		forward = cursor.fetchall()
 		forward = [[item['id'], [[key, value] for key, value in json.loads(item['content']).items()]] for item in forward]
-		data['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(data['last_login'])))
 
-		cursor.execute("select status from user where id=%s", [session['uid']])
-		status = cursor.fetchone()['status']
+		data['forward'] = forward
+
+		cursor.execute("select * from chatroom where uid=%s",[user['uid']])
+		chatrooms = cursor.fetchall()
+
+		data['record_chatrooms'] = []
+		for item in chatrooms:
+			if not item['nick_name'] in data['records']:
+				data['record_chatrooms'].append(item)
+		data['group_chatrooms'] = chatrooms
 
 		if status == 'start':
 			status = True
@@ -209,7 +179,42 @@ def forward():
 
 		closedb(db,cursor)
 
-		return render_template('forward.html', user=user, data=data, forward=forward, status=status, message=message)
+		return render_template('listen.html', user=user, data=data, status=status, message=message)
+
+# 添加群聊监测
+@app.route('/record_add', methods=['POST'])
+def record_add():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("select records from user where id=%s", [session['uid']])
+	records = cursor.fetchone()['records']
+	if records == '':
+		records = data['record']
+	else:
+		records = records + '^' + data['record']
+	cursor.execute("update user set records=%s where id=%s", [records, session['uid']])
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
+# 添加群聊监测
+@app.route('/record_delete', methods=['POST'])
+def record_delete():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("select records from user where id=%s", [session['uid']])
+	records = cursor.fetchone()['records']
+	records = records.split('^')
+	tmp = []
+	for item in records:
+		if not item == data['record']:
+			tmp.append(item)
+	if len(item) == 0:
+		records = ''
+	else:
+		records = '^'.join(tmp)
+	cursor.execute("update user set records=%s where id=%s", [records, session['uid']])
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
 
 # 添加群聊转发
 @app.route('/forward_add', methods=['POST'])
@@ -246,12 +251,112 @@ def forward_delete():
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 
+# 数据统计
+@app.route('/stat')
+def stat():
+	user = session_info()
+	if not 'uid' in session:
+		return redirect(url_for('index'))
+	else:
+		(db,cursor) = connectdb()
+
+		cursor.execute("select * from user where id=%s", [user['uid']])
+		data = cursor.fetchone()
+		data['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(data['last_login'])))
+
+		data_html = {}
+		data_js = {}
+		cursor.execute("select * from message where uid=%s", [data['id']])
+		messages = cursor.fetchall()
+		data_html['total'] = len(messages)
+
+		data_js['plot1'] = {'xAxis': [], 'legend': [], 'data': {}}
+		for item in messages:
+			if not item['msg_type'] in data_js['plot1']['xAxis']:
+				data_js['plot1']['xAxis'].append(item['msg_type'])
+			if not item['chatroom'] in data_js['plot1']['legend']:
+				data_js['plot1']['legend'].append(item['chatroom'])
+
+			if not data_js['plot1']['data'].has_key(item['chatroom']):
+				data_js['plot1']['data'][item['chatroom']] = {}
+			if not data_js['plot1']['data'][item['chatroom']].has_key(item['msg_type']):
+				data_js['plot1']['data'][item['chatroom']][item['msg_type']] = 0
+			data_js['plot1']['data'][item['chatroom']][item['msg_type']] += 1
+
+		for c in data_js['plot1']['legend']:
+			if not data_js['plot1']['data'].has_key(c):
+				data_js['plot1']['data'][c] = {}
+			for t in data_js['plot1']['xAxis']:
+				if not data_js['plot1']['data'][c].has_key(t):
+					data_js['plot1']['data'][c][t] = 0
+		data_js['plot1']['data'] = [{'name': c, 'type': 'bar', 'data': [data_js['plot1']['data'][c][t] for t in data_js['plot1']['xAxis']]} for c in data_js['plot1']['legend']]
+
+		cursor.execute("select * from friend where uid=%s",[user['uid']])
+		friends = cursor.fetchall()
+		cursor.execute("select * from chatroom where uid=%s",[user['uid']])
+		chatrooms = cursor.fetchall()
+
+		data_html['friend_count'] = len(friends)
+		if len(friends) > 20:
+			data_html['friends'] = friends[:20]
+		else:
+			data_html['friends'] = friends
+
+		data_js['plot2'] = {'男': 0, '女': 0, '未知': 0}
+		for item in friends:
+			if int(item['sex']) == 1:
+				data_js['plot2']['男'] += 1
+			elif int(item['sex']) == 2:
+				data_js['plot2']['女'] += 1
+			else:
+				data_js['plot2']['未知'] += 1
+		data_js['plot2'] = [{'name': key, 'value': value} for key, value in data_js['plot2'].items()]
+
+		data_html['chatroom_count'] = len(chatrooms)
+		if len(chatrooms) > 20:
+			data_html['chatrooms'] = chatrooms[:20]
+		else:
+			data_html['chatrooms'] = chatrooms
+
+		data_js['plot3'] = {}
+		for item in friends:
+			if item['province'] == '':
+				item['province'] = '未知'
+			if not item['province'] in data_js['plot3']:
+				data_js['plot3'][item['province']] = 0
+			data_js['plot3'][item['province']] += 1
+		other = 0
+		for key, value in data_js['plot3'].items():
+			if value < 10:
+				other += value
+				del data_js['plot3'][key]
+		data_js['plot3']['其他'] = other
+		data_js['plot3'] = sorted(data_js['plot3'].items(), key=lambda x:x[1], reverse=True)
+		data_js['plot3'] = {'x': [d[0] for d in data_js['plot3']], 'y': [d[1] for d in data_js['plot3']]}
+
+		provinces = ['北京', '天津', '上海', '重庆', '河北', '河南', '云南', '辽宁', '黑龙江', '湖南', '安徽', '山东', '新疆', '江苏', '浙江', '江西', '湖北', '广西', '甘肃', '山西', '内蒙古', '陕西', '吉林', '福建', '贵州', '广东', '青海', '西藏', '四川', '宁夏', '海南', '台湾', '香港', '澳门']
+
+		data_js['plot4'] = []
+		for i in range(0, len(data_js['plot3']['x'])):
+			if data_js['plot3']['x'][i] in provinces:
+				data_js['plot4'].append({'name': data_js['plot3']['x'][i], 'value': data_js['plot3']['y'][i]})
+		if len(data_js['plot4']) > 0:
+			data_js['plot4_max'] = data_js['plot4'][0]['value']
+		else:
+			data_js['plot4_max'] = 100
+
+		cursor.execute("select signature_cloud from user where id=%s", [user['uid']])
+		data_js['plot5'] = json.loads(cursor.fetchone()['signature_cloud'])
+
+		closedb(db,cursor)
+		return render_template('stat.html', user=user, data=data, data_html=data_html, data_js=json.dumps(data_js))
+
 # 运行应用
 @app.route('/start', methods=['POST'])
 def start():
 	uid = str(session['uid'])
 	qrcode = FILE_PREFIX + 'static/data/' + uid + '/qrcode' + str(int(time.time())) + '.png'
-	Popen('python ' + FILE_PREFIX + 'new_chat.py ' + str(session['uid']) + ' ' + qrcode + ' ' + FILE_PREFIX, shell=True)
+	Popen('python ' + FILE_PREFIX + 'new_wxchat.py ' + str(session['uid']) + ' ' + qrcode + ' ' + FILE_PREFIX, shell=True)
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
 # 获取二维码
@@ -276,6 +381,19 @@ def qrcode():
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok', 'qrcode': qrcode})
 
+# 检查是否已经扫码并确认
+@app.route('/confirm', methods=['POST'])
+def confirm():
+	(db,cursor) = connectdb()
+	while True:
+		time.sleep(1)
+		cursor.execute("select status from user where id=%s", [session['uid']])
+		status = cursor.fetchone()['status']
+		if status == 'confirm':
+			break
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
 # 检查是否已登陆微信
 @app.route('/weixin', methods=['POST'])
 def weixin():
@@ -286,6 +404,8 @@ def weixin():
 		status = cursor.fetchone()['status']
 		if status == 'start':
 			break
+	cursor.execute("select avatar from user where id=%s", [session['uid']])
+	session['avatar'] = cursor.fetchone()['avatar']
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 

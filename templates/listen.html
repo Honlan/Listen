@@ -1,0 +1,674 @@
+{% extends 'layout.html' %} {% block style %}
+<style>
+#main {
+    padding: 50px 60px;
+}
+#info {
+	background-color: #f2f2f2;
+	text-align: center;
+	padding: 30px 40px;
+}
+#info img {
+	width: 60px;
+	border-radius: 50%;
+	display: block;
+	margin: 0 auto;
+}
+#content>div {
+	background-color: #f2f2f2;
+	padding: 30px 40px;
+	margin-bottom: 20px;
+}
+#content h4 {
+	margin-top: 0;
+	margin-bottom: 20px;
+}
+#content button {
+	display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #252732;
+    outline: none;
+    color: #252732;
+    background-color: #f2f2f2;
+    border-radius: 2px;
+}
+#content button:hover {
+	background-color: #252732;
+	color: #fff;
+}
+#content .fa {
+	color: #888;
+	padding: 0 15px;
+}
+#content .fa:hover {
+	cursor: pointer;
+	color: #333;
+}
+#content .cell {
+	display: inline-block;
+	border: 1px solid #ddd;
+	padding: 20px 15px;
+	margin: 0 15px 15px 0;
+	background-color: rgba(255, 255, 255, 0.9);
+	border-radius: 3px;
+	position: relative;
+	vertical-align: top;
+}
+#content .cell p {
+	margin-bottom: 25px;
+	color: #888;
+}
+#content .cell p:last-child {
+	margin-bottom: 0;
+}
+#content .cell span {
+	background-color: #53566b;
+	color: #fff;
+	padding: 6px 12px;
+	border-radius: 3px;
+}
+#content .cell .fa {
+	display: none;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	right: 0px;
+	top: 0px;
+}
+#content .cell:hover .fa {
+	display: block;
+	font-size: 25px;
+	color: #fff;
+	background-color: rgba(20, 20, 20, 0.8);
+}
+#qrcode {
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(40, 40, 40, 0.6);
+    text-align: center;
+}
+#qrcode_content {
+    width: 300px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 25px;
+    margin: 0 auto;
+    border-radius: 2px;
+    position: relative;
+}
+#qrcode img {
+	width: 248px;
+	height: 248px;
+}
+#welcome textarea {
+	display: block;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 5px;
+    margin-top: 20px;
+    width: 100%;
+    resize: none;
+}
+#invite input {
+	display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 5px;
+    margin-top: 20px;
+    width: 200px;
+    margin-right: 15px;
+}
+#invite input:hover {
+	cursor: pointer;
+}
+#invite input.active {
+	background-color: #53566b;
+	color: #fff;
+}
+#reminder input {
+	display: block;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 5px;
+    margin-top: 20px;
+    width: 200px;
+}
+#records {
+	position: relative;
+}
+#records #add_record {
+	position: absolute;
+	right: 40px;
+	top: 30px;
+}
+#add_record_div {
+	margin-top: 20px;
+	border: 1px solid #ddd;
+	padding: 30px;
+	display: none;
+}
+.chatrooms img {
+	width: 30px;
+	height: 30px;
+	display: inline-block;
+	margin-right: 12px;
+}
+.chatrooms p {
+	font-size: 13px;
+	display: inline-block;
+}
+.chatrooms div {
+    padding: 8px;
+    background-color: #fff;
+    font-size: 12px;
+    z-index: 999;
+    text-align: left;
+	color: #666;
+}
+.chatrooms div:nth-of-type(2n) {
+    background-color: rgb(250, 251, 253);
+}
+
+.chatrooms div:last-child {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.chatrooms div:hover{
+    cursor: pointer;
+    background-color: #50a3ba;
+    color: #fff;
+}
+#groups {
+	position: relative;
+}
+#groups #add_group {
+	position: absolute;
+	right: 40px;
+	top: 30px;
+}
+#groups #add_group_div, #groups #edit_group_div {
+	margin-top: 20px;
+	border: 1px solid #ddd;
+	padding: 30px;
+	display: none;
+}
+#groups input {
+	display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    outline: none;
+    margin-bottom: 5px;
+    margin-right: 10px;
+}
+#groups input.active {
+	background-color: #53566b;
+	color: #fff;
+}
+#groups .origin:hover {
+	cursor: pointer;
+}
+#groups .group {
+	margin-top: 10px;
+}
+</style>
+{% endblock %} {% block body %}
+<div class="row">
+	<div class="col-xs-12 cold-sm-12 col-md-3 col-lg-3">
+		<div id="info">
+			<img src="{{url_for('static',filename=user['avatar'])}}" alt="">
+			<h4>{{data['username']}}</h4>
+			<p style="color:#888;font-size:12px;margin-top:15px;margin-bottom:10px;">上次登陆时间</p>
+			<p style="color:#252732;margin-bottom:0;">{{data['last_login']}}</p>
+		</div>
+	</div>
+	<div class="col-xs-12 cold-sm-12 col-md-9 col-lg-9">
+		<div id="content">
+			<div id="status">
+				<h4>我的轻听
+					{% if status %}
+					<span style="margin-left:10px;color:rgb(73, 130, 185);">运行中</span>
+					{% else %}
+					<span style="margin-left:10px;color:rgb(185, 78, 73);">已停止</span>
+					{% endif %}
+				</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:25px;">{{message}}</p>
+				{% if not status %}
+				<button id="start" style="margin-bottom:0;">运行</button>
+				{% endif %}
+			</div>
+			<div id="records">
+				<h4>群聊监测</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:25px;">以下群聊中的消息将被记录，可用于进一步数据分析</p>
+				{% for item in data['records'] %}
+					<div class="cell">
+						<span class="fa fa-fw fa-times"></span>
+						<span>{{item}}</span>
+					</div>
+				{% endfor %}
+				
+				<i class="fa fa-fw fa-plus" id="add_record"></i>
+				<div id="add_record_div">
+					<h4>添加监测</h4>
+					<div class="chatrooms">
+						{% for item in data['record_chatrooms'] %}
+							<div>
+								<img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+								<p>{{item['nick_name']}}</p>
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+			<div id="welcome">
+				<h4>入群通知</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:0px;">新人加入监测中群聊时自动发送的欢迎消息，为空则不发送</p>
+				<textarea type="text" name="welcome" placeholder="例如：欢迎%s的加入，其中%s为占位符，表示新人的名称" rows="4">{{data['welcome']}}</textarea>
+				<button id="welcome_save" style="margin-top:20px;margin-bottom:0;">保存</button>
+			</div>
+			<div id="groups">
+				<h4>群聊转发</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:25px;">为了限制消息发送频率，仅转发分享（SHARING）和文件（ATTACHMENT）两类群聊消息</p>
+				{% for item in data['forward'] %}
+					<div class="cell" id="{{item[0]}}">
+						<span class="fa fa-fw fa-cog"></span>
+						{% for i in item[1] %}
+						<p><span>{{i[0]}}</span> - <span>{{i[1]}}</span></p>
+						{% endfor %}
+					</div>
+				{% endfor %}
+				<i class="fa fa-fw fa-plus" id="add_group"></i>
+				<div id="add_group_div">
+					<h4>添加转发</h4>
+					<button id="add_group_new" style="margin-bottom:20px;display:block;">添加群聊</button>
+					<div class="chatrooms" style="margin-top:10px;display:none;">
+						{% for item in data['group_chatrooms'] %}
+							<div>
+								<img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+								<p>{{item['nick_name']}}</p>
+							</div>
+						{% endfor %}
+					</div>
+					<button id="save" style="margin-top:20px;margin-bottom:0;display:block;">保存</button>
+				</div>
+				<div id="edit_group_div">
+					<h4>编辑转发</h4>
+					<button id="edit_group_new" style="margin-bottom:20px;display:block;">添加群聊</button>
+					<div class="chatrooms" style="margin-top:10px;display:none;">
+						{% for item in data['group_chatrooms'] %}
+							<div>
+								<img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+								<p>{{item['nick_name']}}</p>
+							</div>
+						{% endfor %}
+					</div>
+					<button id="edit_save" style="margin-top:20px;margin-bottom:0;margin-right:10px;">保存</button>
+					<button id="edit_delete" style="margin-top:20px;margin-bottom:0;">删除</button>
+				</div>
+			</div>
+			<div id="invite">
+				<h4>自动加群</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:0px;">添加好友后，自动发送群聊邀请，如不需要则清除</p>
+				<input type="text" name="invite" placeholder="选择群聊" value="{{data['invite']}}" readOnly="readOnly">
+				<button id="invite_clear" style="margin-top:20px;margin-bottom:0;">清除</button>
+				<div class="chatrooms" style="margin-top:10px;display:none;">
+					{% for item in data['group_chatrooms'] %}
+						<div>
+							<img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+							<p>{{item['nick_name']}}</p>
+						</div>
+					{% endfor %}
+				</div>
+			</div>
+			<div id="reminder" style="margin-bottom:0;">
+				<h4>掉线提醒</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:0px;">输入邮箱，机器人掉线时将接收提醒邮件，如不需要则留空</p>
+				<input type="text" name="reminder" placeholder="掉线提醒邮件接收邮箱" value="{{data['reminder']}}">
+				<button id="reminder_save" style="margin-top:20px;margin-bottom:0;">保存</button>
+			</div>
+		</div>
+	</div>
+	<div id="qrcode">
+        <div id="qrcode_content">
+            <h4 style="margin-top:10px;margin-bottom:10px;">获取微信二维码中</h4>
+            <img src="{{url_for('static', filename='img/loading.gif')}}" alt="">
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+	$('#add_group_div .chatrooms').before('<div class="group"><input type="text" name="origin" class="origin" placeholder="选择群聊" readOnly="readOnly"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	$('#add_group_div .chatrooms').before('<div class="group"><input type="text" name="origin" class="origin" placeholder="选择群聊" readOnly="readOnly"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	$('#add_group').click(function(event) {
+		$('#add_group_div').fadeIn();
+	});
+	$('#add_group_div #add_group_new').click(function(event) {
+		$('#add_group_div .chatrooms').before('<div class="group"><input type="text" name="origin" class="origin" placeholder="选择群聊" readOnly="readOnly"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	});
+	$('#add_group_div').on('click', '.group .fa-times', function(event) {
+		$(this).parent('.group').remove();
+	});
+
+	var $origin;
+	$('#add_group_div').on('click', '.group .origin', function(event) {
+		$('#add_group_div .chatrooms').fadeIn();
+		$origin = $(this);
+		$(this).addClass('active');
+	});
+	$('#add_group_div .chatrooms div').click(function(event) {
+		var tmp = $(this).children('p').text();
+		$('#add_group_div .chatrooms').fadeOut();
+		$origin.val(tmp);
+		$origin.removeClass('active');
+		$origin = '';
+	});
+
+	$('#add_group_div #save').click(function(event) {
+		var dict = {};
+		var key;
+		$('#add_group_div .group input').each(function(index, el) {
+			if (index % 2 == 0) {
+				key = $(this).val();
+			}
+			else {
+				dict[key] = $(this).val();
+			}
+		});
+		$.ajax({
+			url: '{{url_for("forward_add")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: dict,
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+	$('#groups .cell .fa-cog').each(function(index, el) {
+		$(this).css('padding-top', ($(this).parent('.cell').height() + 40 - 25) / 2);
+	});
+	var edit_cell_id;
+	var $edit_origin;
+	$('#groups .cell .fa-cog').click(function(event) {
+		edit_cell_id = $(this).parent('.cell').attr('id');
+		$('#edit_group_div .group').remove();
+		var $span = $(this).siblings('p').children('span');
+		var key;
+		$span.each(function(index, el) {
+			if (index % 2 == 0) {
+				key = $(this).text();
+			}
+			else {
+				$('#edit_group_div .chatrooms').before('<div class="group"><input type="text" name="origin" placeholder="选择群聊" class="origin" value="' + key + '" readOnly="readOnly"><input type="text" name="nickname" placeholder="群聊简称" value="' + $(this).text() + '"><span class="fa fa-fw fa-times"></span></div>');
+			}
+		});
+		$('#edit_group_div').fadeIn();
+	});
+	$('#edit_group_div #edit_group_new').click(function(event) {
+		$('#edit_group_div .chatrooms').before('<div class="group"><input type="text" name="origin" placeholder="选择群聊" class="origin" readOnly="readOnly"><input type="text" name="nickname" placeholder="群聊简称"><span class="fa fa-fw fa-times"></span></div>');
+	});
+	$('#edit_group_div').on('click', '.group .fa-times', function(event) {
+		$(this).parent('.group').remove();
+	});
+	$('#edit_group_div').on('click', '.group .origin', function(event) {
+		$('#edit_group_div .chatrooms').fadeIn();
+		$edit_origin = $(this);
+		$(this).addClass('active');
+	});
+	$('#edit_group_div .chatrooms div').click(function(event) {
+		var tmp = $(this).children('p').text();
+		$('#edit_group_div .chatrooms').fadeOut();
+		$edit_origin.val(tmp);
+		$edit_origin.removeClass('active');
+		$edit_origin = '';
+	});
+	$('#edit_group_div #edit_save').click(function(event) {
+		var dict = {};
+		var key;
+		$('#edit_group_div .group input').each(function(index, el) {
+			if (index % 2 == 0) {
+				key = $(this).val();
+			}
+			else {
+				dict[key] = $(this).val();
+			}
+		});
+		dict['edit_cell_id'] = edit_cell_id;
+		$.ajax({
+			url: '{{url_for("forward_edit")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: dict,
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+	$('#edit_group_div #edit_delete').click(function(event) {
+		$.ajax({
+			url: '{{url_for("forward_delete")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				cid: edit_cell_id
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+    $('#qrcode #qrcode_content').css('margin-top', ($('#qrcode').height() - 339) / 2);
+
+    var qrcode;
+	$('#start').click(function(event) {
+		$.ajax({
+			url: '{{url_for("start")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {},
+		})
+		.done(function(data) {
+			qrcode = data['qrcode'];
+			$('#qrcode').fadeIn();
+			$.ajax({
+				url: '{{url_for("qrcode")}}',
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					qrcode: qrcode
+				},
+			})
+			.done(function(data) {
+				if (data['qrcode'] == '') {
+					window.location.href = "{{url_for('stat')}}";
+				}
+				else {
+					$('#qrcode h4').text('扫描确认后请稍等');
+					$('#qrcode img').attr('src', 'data:image/png;base64,' + data['qrcode']);
+					$.ajax({
+						url: '{{url_for("confirm")}}',
+						type: 'POST',
+						dataType: 'json',
+						data: {},
+					})
+					.done(function(data) {
+						$('#qrcode h4').text('数据正在加载中');
+						$('#qrcode img').attr('src', "{{url_for('static', filename='img/loading.gif')}}");
+						$.ajax({
+							url: '{{url_for("weixin")}}',
+							type: 'POST',
+							dataType: 'json',
+							data: {},
+						})
+						.done(function(data) {
+							window.location.href = "{{url_for('stat')}}";
+						})
+						.fail(function() {
+						})
+						.always(function() {
+						});
+					})
+					.fail(function() {
+					})
+					.always(function() {
+					});
+				}
+			})
+			.fail(function() {
+			})
+			.always(function() {
+			});
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#welcome_save').click(function(event) {
+		$.ajax({
+			url: '{{url_for("welcome")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				welcome: $('#welcome textarea').val()
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#invite input').click(function(event) {
+		$(this).addClass('active');
+		$('#invite .chatrooms').fadeIn();
+	});
+	$('#invite .chatrooms div').click(function(event) {
+		var tmp = $(this).children('p').text();
+		$('#invite input').val(tmp).removeClass('active');
+		$('#invite .chatrooms').fadeOut();
+		$.ajax({
+			url: '{{url_for("invite")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				invite: tmp
+			},
+		})
+		.done(function(data) {
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+	$('#invite_clear').click(function(event) {
+		$('#invite input').val('');
+		$.ajax({
+			url: '{{url_for("invite")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				invite: ''
+			},
+		})
+		.done(function(data) {
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#reminder_save').click(function(event) {
+		$.ajax({
+			url: '{{url_for("reminder")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				reminder: $('#reminder input').val()
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#add_record').click(function(event) {
+		$('#add_record_div').fadeIn();
+	});
+
+	$('#add_record_div .chatrooms div').click(function(event) {
+		$(this).hide();
+		$('#add_record_div').fadeOut();
+		$.ajax({
+			url: '{{url_for("record_add")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				record: $(this).children('p').text()
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#records .cell .fa-times').each(function(index, el) {
+		$(this).css('padding-top', ($(this).parent('.cell').height() + 40 - 25) / 2);
+	});
+
+	$('#records .cell .fa-times').click(function(event) {
+		var tmp = $(this).siblings('span').text();
+		$(this).parent('.cell').remove();
+		$.ajax({
+			url: '{{url_for("record_delete")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				record: tmp
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+});
+</script>
+{% endblock %}

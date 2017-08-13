@@ -1,5 +1,7 @@
 Flask
 mysql-python
 numpy
+itchat
 wxpy
 Flask-Mail
+jieba

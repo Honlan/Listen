@@ -17,8 +17,16 @@
     <link href="{{url_for('static',filename='css/magic.min.css')}}" rel="stylesheet">
     <script src="{{url_for('static',filename='js/d3.min.js')}}"></script>
     <script src="{{url_for('static',filename='js/echarts.min.js')}}"></script>
+    <script src="{{url_for('static',filename='js/china.js')}}"></script>
     <!--script src="{{url_for('static',filename='js/dark.js')}}"></script-->
-    <!--script src="{{url_for('static',filename='js/echarts2/echarts.js')}}"></script-->
+    <script src="{{url_for('static',filename='js/echarts2/echarts.js')}}"></script>
+    <script>
+    require.config({
+        paths: {
+            echarts: "{{url_for('static', filename='js/echarts2')}}"
+        }
+    });
+    </script>
     <style>
     .magictime {
         -webkit-animation-duration: .5s;
@@ -226,9 +234,9 @@
                 <img src="{{url_for('static',filename=user['avatar'])}}" alt="">
             </a>
             <div id="mynav">
-                <a href="{{url_for('user')}}"><i class="fa fa-fw fa-user"></i>数据统计</a>
-                <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>微信管理</a>
-                <a href="{{url_for('forward')}}"><i class="fa fa-fw fa-paper-plane"></i>轻听设置</a>
+                <a href="{{url_for('listen')}}"><i class="fa fa-fw fa-paper-plane"></i>我的轻听</a>
+                <a href="{{url_for('stat')}}"><i class="fa fa-fw fa-user"></i>数据统计</a>
+                <a href=""><i class="fa fa-fw fa-paper-plane"></i>微信管理</a>
                 <a href="{{url_for('logout')}}"><i class="fa fa-fw fa-times"></i>退出登录</a>
             </div>
             {% else %}
@@ -321,7 +329,7 @@ $(document).ready(function() {
             else {
                 $('#error').text(data['msg']).css('color', 'rgb(73, 130, 185)').css('border-color', 'rgb(73, 130, 185)').show();
                 setTimeout(function(){
-                    window.location.href = '{{url_for("user")}}'
+                    window.location.href = '{{url_for("listen")}}'
                 }, 2000);
             }
         })
@@ -354,7 +362,7 @@ $(document).ready(function() {
             else {
                 $('#error').text(data['msg']).css('color', 'rgb(73, 130, 185)').css('border-color', 'rgb(73, 130, 185)').show();
                 setTimeout(function(){
-                    window.location.href = '{{url_for("user")}}'
+                    window.location.href = '{{url_for("listen")}}'
                 }, 2000);
             }
         })

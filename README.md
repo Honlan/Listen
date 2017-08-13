@@ -25,28 +25,6 @@ pip install -r requirements.txt
 mkdir static/data/
 ```
 
-## 安装Redis
-
-```
-cd ~
-wget http://download.redis.io/releases/redis-3.2.9.tar.gz
-tar xzf redis-3.2.9.tar.gz
-cd redis-3.2.9
-make
-```
-
-## 启动Redis
-
-```
-src/redis-server
-```
-
-## 启动celery
-
-```
-celery worker -A run.celery --loglevel info
-```
-
 ## 编辑wsgi
 
 ## 编辑Apache conf文件
@@ -57,8 +35,10 @@ celery worker -A run.celery --loglevel info
 apt-get install libapache2-mod-wsgi
 ```
 
-## 修改itchat代码，不输出图片
-
 ## 重启Apache
 
 ## TODO
+
+## 注意
+
+- 修改`wxpy/api/messages/message.py`中的`html = HTMLParser()`

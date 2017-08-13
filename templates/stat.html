@@ -1,0 +1,360 @@
+{% extends 'layout.html' %} {% block style %}
+<style>
+#main {
+    padding: 50px 60px;
+}
+#info {
+	background-color: #f2f2f2;
+	text-align: center;
+	padding: 30px 40px;
+}
+#info img {
+	width: 60px;
+	border-radius: 50%;
+	display: block;
+	margin: 0 auto;
+}
+#content>div {
+	background-color: #f2f2f2;
+	padding: 30px 40px;
+	margin-bottom: 20px;
+}
+#content h4 {
+	margin-top: 0;
+	margin-bottom: 20px;
+}
+#content button {
+	display: inline-block;
+    padding: 6px 12px;
+    border: 1px solid #252732;
+    outline: none;
+    margin: 5px 15px 10px 0;
+    color: #252732;
+    background-color: #f2f2f2;
+    border-radius: 2px;
+}
+#content button:hover {
+	background-color: #252732;
+	color: #fff;
+}
+#plot1 {
+	width: 100%;
+	height: 300px;
+}
+#friends .cell, #chatrooms .cell {
+    width: 60px;
+    display: inline-block;
+    text-align: center;
+    margin-bottom: 20px;
+}
+#friends .cell img, #chatrooms .cell img {
+    width: 40px;
+    height: 40px;
+    margin: 10px auto;
+    display: block;
+    border-radius: 50%;
+}
+#chatrooms .cell img {
+    border-radius: 0;
+}
+#friends .cell p, #chatrooms .cell p {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 0;
+    margin-top: 10px;
+    max-height: 17px;
+    overflow-y: hidden;
+}
+
+#plot2 {
+    width: 100%;
+    height: 250px;
+    background-color: #f2f2f2 !important;
+}
+#plot3 {
+    width: 100%;
+    height: 250px;
+    background-color: #f2f2f2 !important;
+}
+#plot4 {
+    width: 100%;
+    height: 300px;
+    background-color: #f2f2f2 !important;
+}
+#plot5 {
+    width: 100%;
+    height: 300px;
+    background-color: #f2f2f2 !important;
+}
+</style>
+{% endblock %} {% block body %}
+<div class="row">
+	<div class="col-xs-12 cold-sm-12 col-md-3 col-lg-3">
+		<div id="info">
+			<img src="{{url_for('static',filename=user['avatar'])}}" alt="">
+			<h4>{{data['username']}}</h4>
+			<p style="color:#888;font-size:12px;margin-top:15px;margin-bottom:10px;">上次登陆时间</p>
+			<p style="color:#252732;margin-bottom:0;">{{data['last_login']}}</p>
+		</div>
+	</div>
+	<div class="col-xs-12 cold-sm-12 col-md-9 col-lg-9">
+		<div id="content">
+            <div id="friends" style="padding-bottom:10px;">
+                <h4>我的好友<span style="color:rgb(185, 78, 73);margin-left:8px;margin-right:8px;">{{data_html['friend_count']}}</span>个</h4>
+                {% for item in data_html['friends'] %}
+                    <div class="cell">
+                        <img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+                        <p>{{item['nick_name']}}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div id="chatrooms" style="padding-bottom:10px;">
+                <h4>我的群聊<span style="color:rgb(185, 78, 73);margin-left:8px;margin-right:8px;">{{data_html['chatroom_count']}}</span>个</h4>
+                {% for item in data_html['chatrooms'] %}
+                    <div class="cell">
+                        <img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+                        <p>{{item['nick_name']}}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="row" style="padding:0;background-color:#fff;">
+                <div class="col-xs-12 cold-sm-12 col-md-5 col-lg-5">
+                    <div style="position:relative">
+                        <div id="plot2"></div>
+                        <h4 style="position:absolute;left:40px;top:30px;">好友性别分布</h4>
+                    </div>
+                </div>
+                <div class="col-xs-12 cold-sm-12 col-md-7 col-lg-7">
+                    <div style="position:relative">
+                        <div id="plot3"></div>
+                        <h4 style="position:absolute;left:40px;top:30px;">好友地域分布</h4>
+                    </div>
+                </div>
+            </div>
+            <div style="position:relative;">
+                <div id="plot4"></div>
+                <h4 style="position:absolute;left:40px;top:30px;">好友地域分布</h4>
+            </div>
+            <div style="position:relative">
+                <div id="plot5"></div>
+                <h4 style="position:absolute;left:40px;top:30px;">我的圈子（数据基于好友签名）</h4>
+            </div>
+            <div style="position:relative">
+                <h4 style="position:absolute;left:40px;top:30px;">已记录群聊消息<span style="color:rgb(185, 78, 73);margin-left:8px;margin-right:8px;">{{data_html['total']}}</span>条</h4>
+                <div id="plot1"></div>
+            </div>
+		</div>
+	</div>
+</div>
+<script>
+$(document).ready(function() {
+	var data_js = eval({{data_js | safe}});
+    console.log(data_js);
+
+    var colorset = ['rgba(221, 107, 102, 0.9)', 'rgba(215, 135, 230, 0.9)', 'rgba(110, 113, 199, 0.9)', 'rgba(109, 188, 191, 0.9)', 'rgba(117, 179, 117, 0.9)', 'rgba(243, 230, 162, 0.9)'];
+
+	var plot1 = echarts.init(document.getElementById('plot1'));
+    var option1 = {
+        color: colorset,
+        legend: {
+            data: data_js['plot1']['legend'],
+            top: 20,
+            right: 40
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+        },
+        grid: {
+            left: 80,
+            right: 30,
+            top: 65,
+            bottom: 40
+        },
+        xAxis: {
+            type: 'category',
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                margin: 12,
+                show: true,
+            },
+            data: data_js['plot1']['xAxis']
+        },
+        yAxis: {
+            type: 'value',
+            scale: true,
+            splitNumber: 3,
+            splitLine: {
+                show: true,
+            },
+            axisLine: {
+                show: false,
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                margin: 12
+            }
+        },
+        series: data_js['plot1']['data']
+    };
+    plot1.setOption(option1);
+
+    var plot2 = echarts.init(document.getElementById('plot2'));
+    var option2 = {
+        color: colorset,
+        tooltip: {
+            trigger: 'item',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: "{a} <br/>{b} : {c} ({d}%)"
+        },
+        calculable: true,
+        series: [{
+            name: '好友性别分布',
+            type: 'pie',
+            radius: [0, 50],
+            center: ['50%', '60%'],
+            data: data_js['plot2']
+        }]
+    };
+    plot2.setOption(option2);
+
+    var plot3 = echarts.init(document.getElementById('plot3'));
+    var option3 = {
+        color: colorset,
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+        },
+        grid: {
+            left: 70,
+            right: 40,
+            top: 80,
+            bottom: 45
+        },
+        xAxis: {
+            type: 'category',
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                margin: 12,
+                show: true,
+            },
+            data: data_js['plot3']['x']
+        },
+        yAxis: {
+            type: 'value',
+            scale: true,
+            splitNumber: 3,
+            splitLine: {
+                show: true,
+            },
+            axisLine: {
+                show: false,
+            },
+            axisTick: {
+                show: false
+            },
+            axisLabel: {
+                margin: 12
+            }
+        },
+        series: {
+            name: '好友地域分布',
+            type: 'bar',
+            data: data_js['plot3']['y']
+        }
+    };
+    plot3.setOption(option3);
+
+    var plot4 = echarts.init(document.getElementById('plot4'));
+    var option4 = {
+        tooltip: {
+            trigger: 'item'
+        },
+        visualMap: {
+            min: 0,
+            max: data_js['plot4_max'],
+            left: 'left',
+            top: 'bottom',
+            calculable: true
+        },
+        series: [{
+            name: '好友地域分布',
+            type: 'map',
+            mapType: 'china',
+            roam: false,
+            label: {
+                normal: {
+                    show: false,
+                    textStyle: {
+                        color: '#666'
+                    }
+                },
+                emphasis: {
+                    show: true,
+                    textStyle: {
+                        color: '#666'
+                    }
+                }
+            },
+            itemStyle: {
+                normal: {
+                    borderColor: '#bbb',
+                    areaColor: '#f2f2f2',
+                },
+                emphasis: {
+                    areaColor: '#fcfcfc',
+                }
+            },
+            data: data_js['plot4']
+        }]
+    };
+    plot4.setOption(option4);
+
+    require(
+        [
+            'echarts',
+            'echarts/chart/wordCloud'
+        ],
+        function(ec) {
+            var plot5 = ec.init(document.getElementById('plot5'));
+            var option = {
+                tooltip: {
+                    show: false
+                },
+                series: [{
+                    name: '我的圈子',
+                    type: 'wordCloud',
+                    size: ['100%', '100%'],
+                    textRotation: [0, 45, 90, -45],
+                    textPadding: 0,
+                    autoSize: {
+                        enable: false,
+                    },
+                    center: ['50%', '58%'],
+                    data: data_js['plot5']
+                }]
+            };
+            plot5.setOption(option);
+        }
+    );
+});
+</script>
+{% endblock %}
