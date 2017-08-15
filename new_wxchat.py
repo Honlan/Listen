@@ -176,10 +176,10 @@ def group_reply(msg):
 						# 转发消息
 						c = ensure_one(bot.groups().search(k))
 						if msg.type == ATTACHMENT:
-							c.send(v + '-' + msg.member.nick_name + ' 分享')
+							c.send(f[msg.sender.nick_name] + '-' + msg.member.nick_name + ' 分享')
 							c.send_file(homedir + 'files/' + msg.file_name)
 						elif msg.type == SHARING:
-							c.send(v + '-' + msg.member.nick_name + ' 分享\n' + msg.text + '\n' + msg.url)
+							c.send(f[msg.sender.nick_name] + '-' + msg.member.nick_name + ' 分享\n' + msg.text + '\n' + msg.url)
 
 # 运行机器人
 bot.join()

@@ -271,7 +271,15 @@ def stat():
 		data_html['total'] = len(messages)
 
 		data_js['plot1'] = {'xAxis': [], 'legend': [], 'data': {}}
+		records = data['records']
+		if records == '':
+			records = []
+		else:
+			records = records.split('^')
 		for item in messages:
+			if not item['chatroom'] in records:
+				pass
+
 			if not item['msg_type'] in data_js['plot1']['xAxis']:
 				data_js['plot1']['xAxis'].append(item['msg_type'])
 			if not item['chatroom'] in data_js['plot1']['legend']:
