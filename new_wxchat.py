@@ -140,6 +140,7 @@ def auto_accept_friends(msg):
 # 群聊消息处理
 @bot.register(chats=Group, msg_types=[TEXT, SHARING, NOTE, PICTURE, ATTACHMENT, VIDEO])
 def group_reply(msg):
+	msg.file_name = unicode(msg.file_name)
 	# 上传数据
 	if msg.sender.nick_name in records:
 		if msg.type == TEXT:
