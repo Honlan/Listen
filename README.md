@@ -41,4 +41,4 @@ apt-get install libapache2-mod-wsgi
 
 ## 注意
 
-- 修改`wxpy/api/messages/message.py`中的`html = HTMLParser()`
+- 修改`wxpy/api/messages/message.py`中的`html = HTMLParser()`，并注释`itchat/components/login.py`中的`utils.print_qr(picDir)`
