@@ -154,6 +154,20 @@
 	padding: 30px;
 	display: none;
 }
+#members {
+	position: relative;
+}
+#members #add_member {
+	position: absolute;
+	right: 40px;
+	top: 30px;
+}
+#add_member_div {
+	margin-top: 20px;
+	border: 1px solid #ddd;
+	padding: 30px;
+	display: none;
+}
 .chatrooms img {
 	width: 30px;
 	height: 30px;
@@ -245,8 +259,8 @@
 				{% endif %}
 			</div>
 			<div id="records">
-				<h4>群聊监测</h4>
-				<p style="color:#888;font-size:12px;margin-bottom:25px;">以下群聊中的消息将被记录，可用于进一步数据分析</p>
+				<h4>群消息监测</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:25px;">以下群聊中的聊天消息将被记录，便于进行群消息分析</p>
 				{% for item in data['records'] %}
 					<div class="cell">
 						<span class="fa fa-fw fa-times"></span>
@@ -267,11 +281,28 @@
 					</div>
 				</div>
 			</div>
-			<div id="welcome">
-				<h4>入群通知</h4>
-				<p style="color:#888;font-size:12px;margin-bottom:0px;">新人加入监测中群聊时自动发送的欢迎消息，为空则不发送</p>
-				<textarea type="text" name="welcome" placeholder="例如：欢迎%s的加入，其中%s为占位符，表示新人的名称" rows="4">{{data['welcome']}}</textarea>
-				<button id="welcome_save" style="margin-top:20px;margin-bottom:0;">保存</button>
+			<div id="members">
+				<h4>群成员分析</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:25px;">以下群聊中的群成员数据将被获取，便于进行群成员分析</p>
+				{% for item in data['members'] %}
+					<div class="cell">
+						<span class="fa fa-fw fa-times"></span>
+						<span>{{item}}</span>
+					</div>
+				{% endfor %}
+				
+				<i class="fa fa-fw fa-plus" id="add_member"></i>
+				<div id="add_member_div">
+					<h4>添加群分析</h4>
+					<div class="chatrooms">
+						{% for item in data['member_chatrooms'] %}
+							<div>
+								<img src="{{url_for('static',filename=item['avatar'])}}" alt="">
+								<p>{{item['nick_name']}}</p>
+							</div>
+						{% endfor %}
+					</div>
+				</div>
 			</div>
 			<div id="groups">
 				<h4>群聊转发</h4>
@@ -326,6 +357,12 @@
 						</div>
 					{% endfor %}
 				</div>
+			</div>
+			<div id="welcome">
+				<h4>入群通知</h4>
+				<p style="color:#888;font-size:12px;margin-bottom:0px;">新人加入监测中群聊时自动发送的欢迎消息，为空则不发送</p>
+				<textarea type="text" name="welcome" placeholder="例如：欢迎%s的加入，其中%s为占位符，表示新人的名称" rows="4">{{data['welcome']}}</textarea>
+				<button id="welcome_save" style="margin-top:20px;margin-bottom:0;">保存</button>
 			</div>
 			<div id="reminder" style="margin-bottom:0;">
 				<h4>掉线提醒</h4>
@@ -659,6 +696,54 @@ $(document).ready(function() {
 			dataType: 'json',
 			data: {
 				record: tmp
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#add_member').click(function(event) {
+		$('#add_member_div').fadeIn();
+	});
+
+	$('#add_member_div .chatrooms div').click(function(event) {
+		$(this).hide();
+		$('#add_member_div').fadeOut();
+		$.ajax({
+			url: '{{url_for("member_add")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				member: $(this).children('p').text()
+			},
+		})
+		.done(function(data) {
+			window.location.reload();
+		})
+		.fail(function() {
+		})
+		.always(function() {
+		});
+	});
+
+	$('#members .cell .fa-times').each(function(index, el) {
+		$(this).css('padding-top', ($(this).parent('.cell').height() + 40 - 25) / 2);
+	});
+
+	$('#members .cell .fa-times').click(function(event) {
+		var tmp = $(this).siblings('span').text();
+		$(this).parent('.cell').remove();
+		$.ajax({
+			url: '{{url_for("member_delete")}}',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				member: tmp
 			},
 		})
 		.done(function(data) {

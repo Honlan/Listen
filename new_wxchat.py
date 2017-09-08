@@ -47,6 +47,13 @@ if records == '':
 else:
 	records = records.split('^')
 
+# 群成员分析
+members = user['members']
+if members == '':
+	members = []
+else:
+	members = members.split('^')
+
 # 创建文件夹
 if not os.path.exists(homedir):
 	os.makedirs(homedir)

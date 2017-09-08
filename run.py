@@ -146,6 +146,10 @@ def listen():
 			data['records'] = []
 		else:
 			data['records'] = data['records'].split('^')
+		if data['members'] == '':
+			data['members'] = []
+		else:
+			data['members'] = data['members'].split('^')
 		data['last_login'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(data['last_login'])))
 		status = data['status']
 		cursor.execute("select * from forward where uid=%s", [user['uid']])
@@ -158,9 +162,12 @@ def listen():
 		chatrooms = cursor.fetchall()
 
 		data['record_chatrooms'] = []
+		data['member_chatrooms'] = []
 		for item in chatrooms:
 			if not item['nick_name'] in data['records']:
 				data['record_chatrooms'].append(item)
+			if not item['nick_name'] in data['members']:
+				data['member_chatrooms'].append(item)
 		data['group_chatrooms'] = chatrooms
 
 		if status == 'start':
@@ -196,7 +203,7 @@ def record_add():
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 
-# 添加群聊监测
+# 删除群聊监测
 @app.route('/record_delete', methods=['POST'])
 def record_delete():
 	data = request.form
@@ -213,6 +220,41 @@ def record_delete():
 	else:
 		records = '^'.join(tmp)
 	cursor.execute("update user set records=%s where id=%s", [records, session['uid']])
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
+# 添加群成员分析
+@app.route('/member_add', methods=['POST'])
+def member_add():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("select members from user where id=%s", [session['uid']])
+	members = cursor.fetchone()['members']
+	if members == '':
+		members = data['member']
+	else:
+		members = members + '^' + data['member']
+	cursor.execute("update user set members=%s where id=%s", [members, session['uid']])
+	closedb(db,cursor)
+	return json.dumps({'result': 'ok'})
+
+# 删除群成员分析
+@app.route('/member_delete', methods=['POST'])
+def member_delete():
+	data = request.form
+	(db,cursor) = connectdb()
+	cursor.execute("select members from user where id=%s", [session['uid']])
+	members = cursor.fetchone()['members']
+	members = members.split('^')
+	tmp = []
+	for item in members:
+		if not item == data['member']:
+			tmp.append(item)
+	if len(item) == 0:
+		members = ''
+	else:
+		members = '^'.join(tmp)
+	cursor.execute("update user set members=%s where id=%s", [members, session['uid']])
 	closedb(db,cursor)
 	return json.dumps({'result': 'ok'})
 
