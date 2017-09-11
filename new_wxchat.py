@@ -62,6 +62,11 @@ if not os.path.exists(homedir):
 	os.makedirs(homedir + 'files/')
 	os.makedirs(homedir + 'avatars/')
 
+if os.path.exists(homedir + 'wxpy.pkl'):
+	os.remove(homedir + 'wxpy.pkl')
+if os.path.exists(homedir + 'wxpy_puid.pkl'):
+	os.remove(homedir + 'wxpy_puid.pkl')
+
 # 登陆
 bot = Bot(cache_path=homedir + 'wxpy.pkl', 
 	qr_path=qrcode, 
