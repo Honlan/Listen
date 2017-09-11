@@ -69,7 +69,7 @@ bot = Bot(cache_path=homedir + 'wxpy.pkl',
 	login_callback=None, 
 	logout_callback=None)
 bot.enable_puid(homedir + 'wxpy_puid.pkl')
-bot.self.is_friend.get_avatar(homedir + 'avatar.jpg')
+bot.self.get_avatar(homedir + 'avatar.jpg')
 bot.auto_mark_as_read = True
 
 # 更新用户状态 confirm
